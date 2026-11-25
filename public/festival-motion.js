@@ -29,7 +29,7 @@
         finish();
       } else {
         menu.dataset.festivalMenu = 'closing';
-        closeTimer = setTimeout(finish, 440);
+        closeTimer = setTimeout(finish, 330);
       }
     }
 
@@ -85,4 +85,13 @@
     observer.disconnect();
     for (const element of modules) element.classList.remove('festival-reveal-pending', 'festival-reveal-visible');
   });
+})();
+
+(() => {
+  const ticker = document.querySelector('.festival-date-ticker');
+  if (!ticker || !('IntersectionObserver' in window)) return;
+  const observer = new IntersectionObserver(([entry]) => {
+    ticker.toggleAttribute('data-offscreen', !entry.isIntersecting);
+  });
+  observer.observe(ticker);
 })();

@@ -87,8 +87,9 @@
   color: var(--festival-menu-ink) !important;
 }
 
-.et-l--header .section-transform:not(.section-transform-active) #menu-open[data-festival-contrast="image"] strong {
-  text-shadow: 0 1px 4px #0009;
+#et-boc #menu-open,
+#et-boc #menu-open :is(p, strong) {
+  text-shadow: none !important;
 }
 
 #et-boc .festival-sponsors .et-pb-arrow-prev,
@@ -135,16 +136,16 @@
   }
 
   .et-l--header .section-transform[data-festival-menu="open"] {
-    animation: festival-menu-drop 540ms cubic-bezier(.22, 1, .36, 1) both;
+    animation: festival-menu-drop 430ms cubic-bezier(.22, 1, .36, 1) both;
   }
 
   .et-l--header .section-transform[data-festival-menu="open"] .menu-item-click {
     animation: festival-reveal 520ms cubic-bezier(.22, 1, .36, 1) backwards;
-    animation-delay: calc(120ms + var(--festival-item, 0) * 55ms);
+    animation-delay: calc(80ms + var(--festival-item, 0) * 45ms);
   }
 
   .et-l--header .section-transform[data-festival-menu="closing"] {
-    animation: festival-menu-lift 420ms cubic-bezier(.55, 0, .75, .35) both;
+    animation: festival-menu-lift 310ms cubic-bezier(.55, 0, .75, .35) both;
     pointer-events: none;
   }
 }
@@ -168,3 +169,52 @@
   from { translate: 0 0; }
   to { translate: 0 -100%; }
 }
+
+.festival-date-ticker {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+}
+
+.festival-date-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.festival-date-track,
+.festival-date-group {
+  display: flex;
+  width: max-content;
+  flex: none;
+}
+
+.festival-date-group > span {
+  flex: none;
+  padding-inline: clamp(28px, 6vw, 96px);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .festival-date-track { animation: festival-date-scroll 42s linear infinite; }
+  .festival-date-ticker[data-offscreen] .festival-date-track { animation-play-state: paused; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .festival-date-track { width: 100%; justify-content: center; }
+  .festival-date-group { width: 100%; justify-content: center; }
+  .festival-date-group:not(:first-child),
+  .festival-date-group > span:not(:first-child) { display: none; }
+  .festival-date-group > span { padding-inline: 0; }
+}
+
+@keyframes festival-date-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+#et-boc .festival-menu-link { display: block; color: inherit; }

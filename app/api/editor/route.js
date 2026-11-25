@@ -1,3 +1,5 @@
+import { revalidateTag } from 'next/cache';
+import { publicPageTag } from '../../../lib/public-page-cache.js';
 import { put } from '@vercel/blob';
 import { mkdir, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
@@ -78,6 +80,7 @@ export async function POST(request) {
     console.error('Editor save failed', error);
     return json({ error: 'Save failed. Reload to check for a newer revision.' }, 409);
   }
+  if (input.action !== 'save') revalidateTag(publicPageTag, { expire: 0 });
   return json(state);
 }
 
