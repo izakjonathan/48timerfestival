@@ -223,23 +223,18 @@ export default function Editor() {
             {elementList?.path !== path ? <p>Loading elements…</p> : elementList.items
               .filter(({ name, type, location }) => (name + ' ' + type + ' ' + location).toLowerCase().includes(filter.trim().toLowerCase()))
               .map(({ id, name, type, location }) => {
-                const assignment = draft.elementColors?.[path]?.[id] ?? {};
-                return <details key={path + id}>
-                  <summary><small>{location} · {type}</small> {name}
-                    {Object.entries(assignment).map(([property, swatch]) =>
-                      <span className="editor-element-swatch" key={property} title={property + ': ' + state.palette[swatch]}
-                        style={{ background: draft.colors?.[swatch] ?? '#' + swatch }} />)}
-                  </summary>
-                  <div className="editor-element-selects">
-                    {Object.entries({ color: 'Text color', 'background-color': 'Background color' }).map(([property, label]) =>
-                      <label key={property}>{label}<select value={assignment[property] ?? ''}
-                        onChange={(event) => updateElementColor(id, property, event.target.value)}>
-                        <option value="">Use site style</option>
-                        {Object.entries(state.palette).map(([key, name]) =>
-                          <option key={key} value={key}>{name} · {draft.colors?.[key] ?? '#' + key}</option>)}
-                      </select></label>)}
-                  </div>
-                </details>;
+                const color = draft.elementColors?.[path]?.[id]?.color ?? '';
+                return <label key={path + id} className="editor-element-row">
+                  <span><small>{location} · {type}</small> {name}
+                    {color && <span className="editor-element-swatch" title={state.palette[color]}
+                      style={{ background: draft.colors?.[color] ?? '#' + color }} />}
+                  </span>
+                  <select value={color} onChange={(event) => updateElementColor(id, 'color', event.target.value)}>
+                    <option value="">Use site style</option>
+                    {Object.entries(state.palette).map(([key, name]) =>
+                      <option key={key} value={key}>{name} · {draft.colors?.[key] ?? '#' + key}</option>)}
+                  </select>
+                </label>;
               })}
           </div> : tab === 'colors' ? <div className="editor-palette">
             {Object.entries(state.palette).map(([key, label]) => {
