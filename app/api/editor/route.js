@@ -2,7 +2,7 @@ import { put } from '@vercel/blob';
 import { mkdir, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import pages from '../../../content/pages.json';
-import { canWrite, readState, saveState } from '../../../lib/editor.js';
+import { canWrite, hasBlobStore, readState, saveState } from '../../../lib/editor.js';
 
 import { pageImages, palette, renderPage, validAppearance } from '../../../lib/site-render.js';
 
@@ -95,7 +95,7 @@ async function uploadImage(request) {
     return json({ error: 'Choose a supported image such as JPEG, PNG or WebP.' }, 400);
   }
   const name = crypto.randomUUID() + '.webp';
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  if (hasBlobStore()) {
     await put('48timerfestival/media/' + name, data, { access: 'private', contentType: 'image/webp' });
   } else {
     await mkdir('.festival-media', { recursive: true });

@@ -8,7 +8,7 @@ Use Node 24. Run `npm ci`, then run `npm run dev`. Visit `/en/` for the site and
 
 ## Deploy
 
-Push this project to a GitHub repository and import it in Vercel using the Next.js preset. Connect a dedicated **private Vercel Blob** store with its `BLOB_READ_WRITE_TOKEN`. Use separate stores for preview and production if both environments need independent editorial state. The existing festival domain can continue serving WordPress during review.
+Push this project to a GitHub repository and import it in Vercel using the Next.js preset. Connect a dedicated **private Vercel Blob** store using Vercel’s default OIDC connection or a `BLOB_READ_WRITE_TOKEN`. Use separate stores for preview and production if both environments need independent editorial state. The existing festival domain can continue serving WordPress during review.
 
 ## Edit
 

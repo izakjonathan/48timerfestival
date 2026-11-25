@@ -1,3 +1,4 @@
+import { hasBlobStore } from '../../../lib/editor.js';
 import { readFile } from 'node:fs/promises';
 import { get } from '@vercel/blob';
 
@@ -6,7 +7,7 @@ export async function GET(request, { params }) {
   if (!/^[0-9a-f-]{36}\.(jpg|png|webp|gif|avif)$/.test(name)) {
     return new Response(null, { status: 404 });
   }
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!hasBlobStore()) {
     if (process.env.VERCEL || !name.endsWith('.webp')) return new Response(null, { status: 404 });
     try {
       return new Response(await readFile('.festival-media/' + name), {
