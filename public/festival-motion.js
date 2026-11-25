@@ -37,6 +37,19 @@
       event.stopImmediatePropagation();
       setOpen(!menu.classList.contains(menuActive) || menu.dataset.festivalMenu === 'closing');
     }, true);
+    menu.addEventListener('click', (event) => {
+      const link = event.target.closest('a.festival-menu-link');
+      if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      // Stop the imported Divi click handler from closing the menu before native navigation.
+      event.stopPropagation();
+    }, true);
+    addEventListener('pageshow', (event) => {
+      if (!event.persisted) return;
+      clearTimeout(closeTimer);
+      menu.classList.remove(menuActive);
+      delete menu.dataset.festivalMenu;
+      toggle.setAttribute('aria-expanded', 'false');
+    });
     toggle.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();

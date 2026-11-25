@@ -267,3 +267,11 @@
   #et-boc #menu-open .festival-menu-icon,
   #et-boc #menu-open .festival-menu-icon > span { transition: none; }
 }
+
+.festival-logo-filter {
+  position: absolute;
+  pointer-events: none;
+}
+
+.festival-logo-tint { flood-color: var(--festival-f9f5c7, #f9f5c7); }
+#et-boc .festival-header-logo { filter: url(#festival-logo-yellow); }
