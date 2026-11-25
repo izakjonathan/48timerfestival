@@ -315,7 +315,7 @@
   word-break: normal;
 }
 
-#et-boc :is(a.et_pb_button, button.et_pb_button, input.et_pb_button) {
+#page-container #et-boc .et_pb_section :is(a.et_pb_button, button.et_pb_button, input.et_pb_button) {
   color: var(--festival-000000, #222453) !important;
 }
 
