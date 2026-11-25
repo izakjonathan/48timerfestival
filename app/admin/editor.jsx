@@ -20,6 +20,7 @@ export default function Editor() {
   const [tab, setTab] = useState('content');
   const [preview, setPreview] = useState('');
   const [selected, setSelected] = useState(null);
+  const [visualTargets, setVisualTargets] = useState([]);
   const frame = useRef(null);
   const scroll = useRef(0);
 
@@ -40,44 +41,41 @@ export default function Editor() {
     if (selected) showSelection(doc, doc.querySelector('[data-festival-element="' + selected.id + '"]'));
     iframe.contentWindow.scrollTo(0, scroll.current);
     doc.addEventListener('scroll', () => { scroll.current = iframe.contentWindow.scrollY; }, { passive: true });
-    function selectElement(element) {
-      const target = element?.closest('[data-festival-element]');
-      if (!target) return;
-      const name = target.textContent.trim().replace(/\s+/g, ' ').slice(0, 70) || target.tagName.toLowerCase();
-      setSelected({ id: target.dataset.festivalElement, name });
-      showSelection(doc, target);
-    }
+  }
 
-    let touchStart;
-    let lastTap = 0;
-    doc.addEventListener('touchstart', (event) => {
-      touchStart = iframe.dataset.mode === 'visual' && event.touches.length === 1
-        ? event.touches[0] : null;
-    }, { passive: true, capture: true });
-    doc.addEventListener('touchmove', (event) => {
-      const touch = event.touches[0];
-      if (touchStart && (event.touches.length !== 1 ||
-        Math.hypot(touch.clientX - touchStart.clientX, touch.clientY - touchStart.clientY) > 10)) {
-        touchStart = null;
-      }
-    }, { passive: true, capture: true });
-    doc.addEventListener('touchcancel', () => { touchStart = null; }, { passive: true, capture: true });
-    doc.addEventListener('touchend', (event) => {
-      const start = touchStart;
-      touchStart = null;
-      const end = event.changedTouches[0];
-      if (iframe.dataset.mode !== 'visual' || !start || !end ||
-        Math.hypot(end.clientX - start.clientX, end.clientY - start.clientY) > 10) return;
-      event.preventDefault();
-      lastTap = Date.now();
-      selectElement(doc.elementFromPoint(end.clientX, end.clientY) ?? event.target);
-    }, { passive: false, capture: true });
-    doc.addEventListener('click', (event) => {
-      if (iframe.dataset.mode !== 'visual') return;
-      event.preventDefault();
-      if (Date.now() - lastTap < 500) return;
-      selectElement(event.target);
-    }, true);
+  const gesture = useRef(null);
+  function startPicking(event) {
+    if (!event.isPrimary || event.button !== 0) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    gesture.current = { x: event.clientX, y: event.clientY, scroll: scroll.current, moved: false };
+  }
+
+  function movePicking(event) {
+    const start = gesture.current;
+    if (!start || !event.isPrimary) return;
+    const delta = start.y - event.clientY;
+    if (!start.moved && Math.hypot(start.x - event.clientX, delta) < 8) return;
+    start.moved = true;
+    frame.current?.contentWindow.scrollTo(0, start.scroll + delta);
+  }
+
+  function finishPicking(event) {
+    if (!event.isPrimary) return;
+    const start = gesture.current;
+    gesture.current = null;
+    if (!start || start.moved || Math.hypot(start.x - event.clientX, start.y - event.clientY) >= 8) return;
+    const iframe = frame.current;
+    const doc = iframe?.contentDocument;
+    if (!doc) return;
+    const rect = iframe.getBoundingClientRect();
+    const target = doc.elementFromPoint(
+      event.clientX - rect.left - iframe.clientLeft,
+      event.clientY - rect.top - iframe.clientTop
+    )?.closest('[data-festival-element]');
+    if (!target) return;
+    const name = target.textContent.trim().replace(/\s+/g, ' ').slice(0, 70) || target.tagName.toLowerCase();
+    setSelected({ id: target.dataset.festivalElement, name });
+    showSelection(doc, target);
   }
 
   function updateElementColor(property, swatch) {
@@ -123,7 +121,12 @@ export default function Editor() {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error('Preview unavailable.');
-        setPreview(await response.text());
+        const html = await response.text();
+        setPreview(html);
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        setVisualTargets([...doc.querySelectorAll('h1[data-festival-element],h2[data-festival-element],h3[data-festival-element],p[data-festival-element],a[data-festival-element],button[data-festival-element]')]
+          .map((node) => ({ id: node.dataset.festivalElement, name: node.textContent.trim().replace(/\s+/g, ' ').slice(0, 70) }))
+          .filter(({ name }) => name));
       } catch (error) {
         if (error.name !== 'AbortError') setStatus('Preview unavailable.');
       }
@@ -218,6 +221,17 @@ export default function Editor() {
             </optgroup>)}
           </select></label>
           {tab === 'visual' ? <div className="editor-visual-controls">
+            <label>Select an element
+              <select value={selected?.id ?? ''} onChange={(event) => {
+                const next = visualTargets.find(({ id }) => id === event.target.value);
+                setSelected(next ?? null);
+                const doc = frame.current?.contentDocument;
+                if (doc) showSelection(doc, next ? doc.querySelector('[data-festival-element="' + next.id + '"]') : null);
+              }}>
+                <option value="">Tap the preview or choose here</option>
+                {visualTargets.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
+              </select>
+            </label>
             {selected ? <>
               <p className="editor-visual-selected">{selected.name}</p>
               {Object.entries({ color: 'Text color', 'background-color': 'Background color' }).map(([property, label]) =>
@@ -270,8 +284,13 @@ export default function Editor() {
           })}
           </>}
         </section>
-        <section className="editor-preview" aria-label="Page preview">
+        <section className="editor-preview" aria-label="Page preview" style={{ position: 'relative' }}>
           <iframe ref={frame} title="Page preview" src={path} srcDoc={preview || undefined} sandbox="allow-same-origin" data-mode={tab} onLoad={preparePreview} />
+          {tab === 'visual' && preview && <div aria-hidden="true"
+            style={{ position: 'absolute', zIndex: 1, inset: 0, touchAction: 'none', cursor: 'crosshair', userSelect: 'none' }}
+            onPointerDown={startPicking} onPointerMove={movePicking} onPointerUp={finishPicking}
+            onPointerCancel={() => { gesture.current = null; }}
+            onWheel={(event) => frame.current?.contentWindow.scrollBy(0, event.deltaY)} />}
         </section>
       </div>
       <footer className="editor-actions">
