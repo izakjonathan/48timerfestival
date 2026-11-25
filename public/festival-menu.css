@@ -275,3 +275,15 @@
 
 .festival-logo-tint { flood-color: var(--festival-f9f5c7, #f9f5c7); }
 #et-boc .festival-header-logo { filter: url(#festival-logo-yellow); }
+
+#et-boc .et-l--footer :is(.et_pb_text_inner, .et_pb_text_inner *, .et_pb_heading_container, .et_pb_heading_container *, .et_pb_social_media_follow .icon::before) {
+  color: var(--festival-000000, #222453) !important;
+}
+
+#et-boc #main-content .festival-countdown {
+  background-color: var(--festival-f9f5c7, #fff642) !important;
+}
+
+#et-boc #main-content .festival-countdown :is(h1, h1 span, .hurrytimer-cdt__time, .hurrytimer-cdt__label, .hurrytimer-cdt__sep) {
+  color: var(--festival-000000, #222453) !important;
+}
