@@ -1,14 +1,18 @@
 import { put } from '@vercel/blob';
+import { mkdir, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import pages from '../../../content/pages.json';
 import { canWrite, readState, saveState } from '../../../lib/editor.js';
+
+import { palette } from '../../../lib/appearance.js';
+import { pageImages, renderPage, validAppearance } from '../../../lib/site-render.js';
 
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 
 export async function GET() {
   const { state } = await readState();
   return json({
-    ...state, writable: canWrite(),
+    ...state, writable: canWrite(), palette, images: pageImages,
     pages: Object.fromEntries(Object.entries(pages).map(([path, page]) => [path, page.fields])),
   });
 }
@@ -19,9 +23,11 @@ function safeUrl(value) {
 
 function validate(draft) {
   if (!draft || typeof draft !== 'object' || Array.isArray(draft)) return false;
-  return Object.entries(draft).every(([route, edits]) =>
-    Object.hasOwn(pages, route) && edits && typeof edits === 'object' && !Array.isArray(edits) &&
-    Object.entries(edits).every(([key, edit]) => {
+  return Object.entries(draft).every(([route, edits]) => {
+    if (!edits || typeof edits !== 'object' || Array.isArray(edits)) return false;
+    if (route === 'colors' || route === 'images') return validAppearance(route, edits);
+    if (!Object.hasOwn(pages, route)) return false;
+    return Object.entries(edits).every(([key, edit]) => {
       const fields = pages[route].fields;
       if (!Object.hasOwn(fields, key) || !edit || typeof edit !== 'object' || Array.isArray(edit)) return false;
       return Object.entries(edit).every(([name, value]) => {
@@ -29,8 +35,8 @@ function validate(draft) {
         if (name === 'href') return fields[key].kind === 'link' && safeUrl(value);
         return name === 'value' && (fields[key].kind !== 'image' || safeUrl(value));
       });
-    })
-  );
+    });
+  });
 }
 
 export async function POST(request) {
@@ -40,11 +46,17 @@ export async function POST(request) {
   if (request.headers.get('content-type')?.startsWith('multipart/form-data')) {
     return uploadImage(request);
   }
-  if (!canWrite()) return json({ error: 'Connect a private Vercel Blob store to enable publishing.' }, 503);
   const body = await request.text();
   if (body.length > 500000) return json({ error: 'Draft is too large.' }, 413);
   let input;
   try { input = JSON.parse(body); } catch { return json({ error: 'Invalid JSON.' }, 400); }
+  if (input?.action === 'preview') {
+    if (!Object.hasOwn(pages, input.path) || !validate(input.draft)) return json({ error: 'Invalid preview.' }, 400);
+    return new Response(renderPage(input.path, input.draft, { preview: true }), {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
+    });
+  }
+  if (!canWrite()) return json({ error: 'Connect a private Vercel Blob store to enable publishing.' }, 503);
   if (!input || !['save', 'publish', 'restore'].includes(input.action)) return json({ error: 'Unknown action.' }, 400);
   const { state, etag } = await readState();
   if (input.revision !== state.revision) return json({ error: 'A newer revision exists. Reload before saving.' }, 409);
@@ -71,7 +83,7 @@ export async function POST(request) {
 }
 
 async function uploadImage(request) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return json({ error: 'Connect a private Blob store to upload images.' }, 503);
+  if (!canWrite()) return json({ error: 'Connect a private Blob store to upload images.' }, 503);
   if (Number(request.headers.get('content-length')) > 4200000) return json({ error: 'Choose an image under 4 MB.' }, 413);
   const image = (await request.formData()).get('image');
   if (!(image instanceof File) || image.size > 4000000) return json({ error: 'Choose an image under 4 MB.' }, 400);
@@ -84,6 +96,11 @@ async function uploadImage(request) {
     return json({ error: 'Choose a supported image such as JPEG, PNG or WebP.' }, 400);
   }
   const name = crypto.randomUUID() + '.webp';
-  await put('48timerfestival/media/' + name, data, { access: 'private', contentType: 'image/webp' });
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    await put('48timerfestival/media/' + name, data, { access: 'private', contentType: 'image/webp' });
+  } else {
+    await mkdir('.festival-media', { recursive: true });
+    await writeFile('.festival-media/' + name, data, { flag: 'wx' });
+  }
   return json({ url: '/media/' + name });
 }

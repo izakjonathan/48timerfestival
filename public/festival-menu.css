@@ -6,7 +6,7 @@
     height: 100% !important;
     overflow-y: auto;
     overscroll-behavior: contain;
-    background: #f9f5c7 !important;
+    background: var(--festival-f9f5c7, #f9f5c7) !important;
   }
 
   .et-l--header .section-transform-active #menu-open,
@@ -14,10 +14,10 @@
   .et-l--header .section-transform-active .menu-item-click p,
   .et-l--header .section-transform-active .menu-item-click strong,
   .et-l--header .section-transform-active .et_pb_social_media_follow .icon::before {
-    color: #2b141e !important;
+    color: var(--festival-2b141e, #2b141e) !important;
   }
 
   .et-l--header .section-transform-active .et_pb_text.menu-item-click {
-    border-color: #2b141e !important;
+    border-color: var(--festival-2b141e, #2b141e) !important;
   }
 }

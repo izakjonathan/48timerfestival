@@ -25,3 +25,10 @@ body { margin: 0; background: #171715; color: #f3f0e8; font: 15px system-ui, san
   .editor-fields { max-height: 48vh; }
   .editor-preview iframe { height: 55vh; }
 }
+.editor-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.editor-tabs button[aria-pressed="true"] { background: #eee9dc; color: #171715; }
+.editor-color { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: end; margin-bottom: 12px; }
+.editor-color label { margin: 0; }
+.editor-color span { padding-bottom: 7px; }
+.editor-color input[type="color"] { height: 38px; padding: 3px; cursor: pointer; }
+.editor-image { display: block; width: 100%; max-height: 200px; object-fit: contain; margin-bottom: 10px; background: #171715; }

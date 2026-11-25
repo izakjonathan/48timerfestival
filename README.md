@@ -12,7 +12,9 @@ Push this project to a GitHub repository and import it in Vercel using the Next.
 
 ## Edit
 
-Choose a page and open a field. The preview reflects unsaved text, link and image changes. **Save draft** stores the changes for later. **Publish** applies them to the public page. **Restore previous** switches back to the previous publication. Photo uploads accept supported images under 4 MB and store a resized WebP. The editor covers captured text-only elements and image tags; embedded plugin content, styled text structures, and section layout remain in the imported markup.
+Use **Site colors** to change a shared color across the imported pages. Use **Images** to replace an image from the device’s photo or file picker. Replacements apply wherever the same imported image is used, including responsive variants, backgrounds, and gallery links. The Home page offers a desktop poster and an optional mobile poster override.
+
+**Save draft** stores changes for later. **Publish** applies them to the public pages. **Restore previous** restores the preceding publication, including its colors and images. Large photos are resized when the browser can open them. External embeds and images loaded dynamically by third-party services remain managed at their source.
 
 ## WordPress dependencies
 
