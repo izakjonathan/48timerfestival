@@ -32,3 +32,9 @@ body { margin: 0; background: #171715; color: #f3f0e8; font: 15px system-ui, san
 .editor-color span { padding-bottom: 7px; }
 .editor-color input[type="color"] { height: 38px; padding: 3px; cursor: pointer; }
 .editor-image { display: block; width: 100%; max-height: 200px; object-fit: contain; margin-bottom: 10px; background: #171715; }
+.editor-workspace-visual { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.editor-workspace-visual .editor-fields { max-height: none; }
+.editor-workspace-visual .editor-preview iframe { height: 78vh; }
+.editor-visual-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px; }
+.editor-visual-controls label { min-width: min(100%, 190px); }
+.editor-visual-selected { max-width: 28em; overflow-wrap: anywhere; }

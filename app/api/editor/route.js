@@ -26,6 +26,15 @@ function validate(draft) {
   if (!draft || typeof draft !== 'object' || Array.isArray(draft)) return false;
   return Object.entries(draft).every(([route, edits]) => {
     if (!edits || typeof edits !== 'object' || Array.isArray(edits)) return false;
+    if (route === 'elementColors') return Object.entries(edits).every(([path, assignments]) =>
+      Object.hasOwn(pages, path) && assignments && typeof assignments === 'object' && !Array.isArray(assignments) &&
+      Object.entries(assignments).every(([id, values]) =>
+        /^element-\d{1,5}$/.test(id) && values && typeof values === 'object' && !Array.isArray(values) &&
+        Object.entries(values).every(([property, swatch]) =>
+          ['color', 'background-color'].includes(property) && typeof swatch === 'string' && Object.hasOwn(palette, swatch)
+        )
+      )
+    );
     if (route === 'colors' || route === 'images') return validAppearance(route, edits);
     if (!Object.hasOwn(pages, route)) return false;
     return Object.entries(edits).every(([key, edit]) => {

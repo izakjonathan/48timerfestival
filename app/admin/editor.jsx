@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const languageFor = (path) => path.startsWith('/en/') ? 'English' : 'Dansk';
 const labelFor = (path) => {
@@ -19,6 +19,53 @@ export default function Editor() {
   const [filter, setFilter] = useState('');
   const [tab, setTab] = useState('content');
   const [preview, setPreview] = useState('');
+  const [selected, setSelected] = useState(null);
+  const frame = useRef(null);
+  const scroll = useRef(0);
+
+  function showSelection(doc, element) {
+    const previous = doc.querySelector('[data-festival-selected]');
+    previous?.removeAttribute('data-festival-selected');
+    element?.setAttribute('data-festival-selected', '');
+  }
+
+  function preparePreview(event) {
+    const iframe = event.currentTarget;
+    const doc = iframe.contentDocument;
+    if (!doc?.querySelector('[data-festival-element]')) return;
+    const styles = doc.createElement('style');
+    styles.textContent = 'html[data-festival-pick] [data-festival-element]:hover{cursor:crosshair} html[data-festival-pick] [data-festival-selected]{outline:2px solid #5769ff!important;outline-offset:2px}';
+    doc.head.append(styles);
+    doc.documentElement.toggleAttribute('data-festival-pick', iframe.dataset.mode === 'visual');
+    if (selected) showSelection(doc, doc.querySelector('[data-festival-element="' + selected.id + '"]'));
+    iframe.contentWindow.scrollTo(0, scroll.current);
+    doc.addEventListener('scroll', () => { scroll.current = iframe.contentWindow.scrollY; }, { passive: true });
+    doc.addEventListener('click', (click) => {
+      if (iframe.dataset.mode !== 'visual') return;
+      click.preventDefault();
+      const element = click.target.closest('[data-festival-element]');
+      if (!element) return;
+      const name = element.textContent.trim().replace(/\s+/g, ' ').slice(0, 70) || element.tagName.toLowerCase();
+      setSelected({ id: element.dataset.festivalElement, name });
+      showSelection(doc, element);
+    }, true);
+  }
+
+  function updateElementColor(property, swatch) {
+    setDraft((previous) => {
+      const assignments = { ...previous.elementColors?.[path] };
+      const colors = { ...assignments[selected.id] };
+      if (swatch) colors[property] = swatch;
+      else delete colors[property];
+      if (Object.keys(colors).length) assignments[selected.id] = colors;
+      else delete assignments[selected.id];
+      return { ...previous, elementColors: { ...previous.elementColors, [path]: assignments } };
+    });
+  }
+
+  useEffect(() => {
+    frame.current?.contentDocument?.documentElement.toggleAttribute('data-festival-pick', tab === 'visual');
+  }, [tab]);
 
   useEffect(() => {
     async function load() {
@@ -46,7 +93,8 @@ export default function Editor() {
           body: JSON.stringify({ action: 'preview', path, draft }),
           signal: controller.signal,
         });
-        if (response.ok) setPreview(await response.text());
+        if (!response.ok) throw new Error('Preview unavailable.');
+        setPreview(await response.text());
       } catch (error) {
         if (error.name !== 'AbortError') setStatus('Preview unavailable.');
       }
@@ -126,21 +174,35 @@ export default function Editor() {
     </header>
     <div className="editor-status" role="status">{status}</div>
     {state && <>
-      <div className="editor-workspace">
+      <div className={'editor-workspace' + (tab === 'visual' ? ' editor-workspace-visual' : '')}>
         <section className="editor-fields" aria-label="Page content">
           <nav aria-label="Editor sections" className="editor-tabs">
-            {Object.entries({ content: 'Content', colors: 'Site colors', images: 'Images' }).map(([key, title]) =>
+            {Object.entries({ content: 'Content', visual: 'Visual colors', colors: 'Site colors', images: 'Images' }).map(([key, title]) =>
               <button key={key} type="button" aria-pressed={tab === key}
                 onClick={() => { setTab(key); setFilter(''); }}>{title}</button>
             )}
           </nav>
-          <label>Preview page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); }}>
+          <label>Preview page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); setSelected(null); scroll.current = 0; }}>
             {['English', 'Dansk'].map((language) => <optgroup key={language} label={language}>
               {Object.keys(state.pages).filter((route) => languageFor(route) === language).map((route) =>
                 <option key={route} value={route}>{labelFor(route)}</option>)}
             </optgroup>)}
           </select></label>
-          {tab === 'colors' ? <div className="editor-palette">
+          {tab === 'visual' ? <div className="editor-visual-controls">
+            {selected ? <>
+              <p className="editor-visual-selected">{selected.name}</p>
+              {Object.entries({ color: 'Text color', 'background-color': 'Background color' }).map(([property, label]) =>
+                <label key={property}>{label}
+                  <select value={draft.elementColors?.[path]?.[selected.id]?.[property] ?? ''}
+                    onChange={(event) => updateElementColor(property, event.target.value)}>
+                    <option value="">Use site style</option>
+                    {Object.entries(state.palette).map(([key, name]) =>
+                      <option key={key} value={key}>{name} · {draft.colors?.[key] ?? '#' + key}</option>)}
+                  </select>
+                </label>
+              )}
+            </> : <p>Click a heading, button, text block or section in the preview.</p>}
+          </div> : tab === 'colors' ? <div className="editor-palette">
             {Object.entries(state.palette).map(([key, label]) => {
               const value = draft.colors?.[key] ?? '#' + key;
               return <div key={key} className="editor-color">
@@ -180,7 +242,7 @@ export default function Editor() {
           </>}
         </section>
         <section className="editor-preview" aria-label="Page preview">
-          <iframe title="Page preview" src={path} srcDoc={preview || undefined} sandbox="allow-same-origin" />
+          <iframe ref={frame} title="Page preview" src={path} srcDoc={preview || undefined} sandbox="allow-same-origin" data-mode={tab} onLoad={preparePreview} />
         </section>
       </div>
       <footer className="editor-actions">
