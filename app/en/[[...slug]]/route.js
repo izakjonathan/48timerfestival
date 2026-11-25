@@ -11,7 +11,7 @@ export async function GET(request, { params }) {
   if (!page) return new Response('Page not found', { status: 404 });
   const { state } = await readState();
   const edits = state.published[route] ?? {};
-  let source = page.html;
+  let source = page.html.replace('</head>', '<link rel="stylesheet" href="/festival-menu.css"></head>');
   if (Object.keys(edits).length) {
     const $ = load(source);
     for (const [key, edit] of Object.entries(edits)) {
