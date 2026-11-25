@@ -1,3 +1,4 @@
+import { renderCanvas } from '../../../lib/editor-canvas.js';
 import { colorRoles } from '../../../lib/color-roles.js';
 import { revalidateTag } from 'next/cache';
 import { publicPageTag } from '../../../lib/public-page-cache.js';
@@ -75,6 +76,15 @@ export async function POST(request) {
       input = { action: 'preview', path: form.get('path'), draft: JSON.parse(form.get('draft')) };
     } else input = JSON.parse(body);
   } catch { return json({ error: 'Invalid JSON.' }, 400); }
+  if (input?.action === 'canvas') {
+    if (!Object.hasOwn(pages, input.path) || !validate(input.draft) ||
+        typeof input.instance !== 'string' || !/^[0-9a-f-]{36}$/.test(input.instance)) {
+      return json({ error: 'Invalid editing view.' }, 400);
+    }
+    return new Response(renderCanvas(input.path, input.draft, origin, input.instance), {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
+    });
+  }
   if (input?.action === 'preview') {
     if (!Object.hasOwn(pages, input.path) || !validate(input.draft)) return json({ error: 'Invalid preview.' }, 400);
     return new Response(renderPage(input.path, input.draft, { preview: true }), {

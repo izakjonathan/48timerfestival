@@ -201,7 +201,7 @@ export default function Editor() {
   return <main className="editor">
     <header className="editor-header">
       <div><p>48 Timer Festival</p><h1>Site editor</h1></div>
-      <a href={path} target="_blank" rel="noreferrer">View live site ↗</a>
+      <div><a href="/admin/canvas">Open visual editor</a> · <a href={path} target="_blank" rel="noreferrer">View live site ↗</a></div>
     </header>
     <div className="editor-status" role="status">{status}</div>
     {state && <>
