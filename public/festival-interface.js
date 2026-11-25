@@ -131,3 +131,13 @@
     window.location.assign(link.href);
   }, true);
 })();
+
+document.querySelector('.festival-registration')?.addEventListener('submit', (event) => {
+  const form = event.currentTarget;
+  const date = form.querySelector('[data-registration-date]').value;
+  const parts = date.split(/[-T:]/);
+  form.querySelectorAll('input[type="hidden"]').forEach((input, index) => {
+    input.disabled = !date;
+    input.value = parts[index] ?? '';
+  });
+});

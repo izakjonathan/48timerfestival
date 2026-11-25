@@ -314,3 +314,91 @@
   overflow-wrap: normal;
   word-break: normal;
 }
+
+#et-boc :is(a.et_pb_button, button.et_pb_button, input.et_pb_button) {
+  color: var(--festival-000000, #222453) !important;
+}
+
+#et-boc .festival-home-cards .et_pb_heading {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 0 !important;
+  background-size: cover;
+  background-position: center;
+  min-height: 0 !important;
+}
+
+#et-boc .festival-home-cards :is(.et_pb_heading, .et_pb_heading_container, .et_pb_module_heading, .et_pb_module_heading *) {
+  text-shadow: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-text-stroke: 0 !important;
+}
+
+#et-boc .festival-sponsors {
+  --festival-sponsor-height: clamp(180px, 26vw, 320px);
+}
+
+#et-boc .festival-sponsors .et_pb_gallery_items,
+#et-boc .festival-sponsors .et_pb_gallery_image {
+  height: var(--festival-sponsor-height) !important;
+}
+
+#et-boc .festival-sponsors .et_pb_gallery_image {
+  display: grid;
+  place-items: center;
+}
+
+#et-boc .festival-sponsors .et_pb_gallery_image a {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+#et-boc .festival-sponsors .et_pb_gallery_image img {
+  width: min(64%, 320px);
+  height: calc(var(--festival-sponsor-height) * .65);
+  object-fit: contain;
+}
+
+#et-boc .festival-sponsors .et-pb-arrow-prev { left: 0 !important; }
+#et-boc .festival-sponsors .et-pb-arrow-next { right: 0 !important; }
+#et-boc .festival-sponsors :is(.et-pb-arrow-prev, .et-pb-arrow-next) {
+  top: calc(var(--festival-sponsor-height) / 2);
+  opacity: 1;
+}
+
+#et-boc .festival-registration {
+  display: grid;
+  gap: 18px;
+  max-width: 720px;
+  margin-inline: auto;
+  padding: clamp(20px, 5vw, 48px);
+  background: var(--festival-b39a9b, #47c2c3);
+  color: var(--festival-000000, #222453);
+}
+
+#et-boc .festival-registration :is(h2, a) { color: inherit; }
+.festival-registration label { display: grid; gap: 6px; font-weight: 700; }
+#et-boc .festival-registration :is(input, select, textarea) {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  font: inherit;
+  background: var(--festival-f9f5c7, #fff642);
+  color: var(--festival-000000, #222453);
+  border: 1px solid currentColor;
+}
+.festival-registration button {
+  justify-self: start;
+  padding: 12px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--festival-000000, #222453);
+  color: var(--festival-f9f5c7, #fff642);
+  font: 20px "Fjalla One", sans-serif;
+  cursor: pointer;
+}
