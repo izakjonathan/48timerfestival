@@ -21,3 +21,98 @@
     border-color: var(--festival-2b141e, #2b141e) !important;
   }
 }
+
+#trp-floater-ls,
+.trp-floater-ls.trp-language-switcher-container {
+  display: none !important;
+}
+
+.festival-language {
+  position: fixed;
+  z-index: 100000;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: var(--festival-2b141e, #2b141e);
+  color: var(--festival-f9f5c7, #f9f5c7);
+  font: 13px/1 "Fjalla One", sans-serif;
+}
+
+.festival-language a {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  min-height: 30px;
+  padding: 0 5px;
+  border-radius: inherit;
+  color: inherit;
+}
+
+.festival-language a[aria-current="page"],
+.festival-language a:hover {
+  background: var(--festival-f9f5c7, #f9f5c7);
+  color: var(--festival-2b141e, #2b141e);
+}
+
+.festival-language a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -4px;
+}
+
+.festival-poster-image { display: none; }
+
+@media (max-width: 767px) {
+  #et-boc #main-content .festival-poster.et_pb_section {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0 !important;
+  }
+
+  .festival-poster > .et_parallax_bg_wrap { display: none !important; }
+
+  .festival-poster > .festival-poster-image,
+  .festival-poster-image img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+.et-l--header .section-transform:not(.section-transform-active) #menu-open[data-festival-contrast] strong {
+  color: var(--festival-menu-ink) !important;
+}
+
+.et-l--header .section-transform:not(.section-transform-active) #menu-open[data-festival-contrast="image"] strong {
+  text-shadow: 0 1px 4px #0009;
+}
+
+#et-boc .festival-sponsors .et-pb-arrow-prev,
+#et-boc .festival-sponsors .et-pb-arrow-next {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 44px;
+  margin-top: -22px;
+  color: var(--festival-2b141e, #2b141e);
+  font-size: 0;
+}
+
+#et-boc .festival-sponsors .et-pb-arrow-prev::before,
+#et-boc .festival-sponsors .et-pb-arrow-next::before {
+  content: "";
+  display: block;
+  width: 9px;
+  height: 9px;
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  transform: rotate(135deg);
+}
+
+#et-boc .festival-sponsors .et-pb-arrow-next::before { transform: rotate(-45deg); }
+#et-boc .festival-sponsors .et-pb-arrow-prev:focus-visible,
+#et-boc .festival-sponsors .et-pb-arrow-next:focus-visible { opacity: 1; }
