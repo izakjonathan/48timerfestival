@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.vercel/
+.env*
+!.env.example
+.festival-editor.json
+
+.festival-editor.json.*
+AGENTS.md
+
+/content/pages.json
