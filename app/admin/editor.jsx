@@ -23,12 +23,51 @@ export default function Editor() {
   const [visualTargets, setVisualTargets] = useState([]);
   const frame = useRef(null);
   const scroll = useRef(0);
+  const previewStyles = useRef(new Map());
 
   function showSelection(doc, element) {
     const previous = doc.querySelector('[data-festival-selected]');
     previous?.removeAttribute('data-festival-selected');
     element?.setAttribute('data-festival-selected', '');
   }
+
+  function applyPreviewColors(doc) {
+    if (!doc?.querySelector('[data-festival-element]')) return;
+    const root = doc.documentElement.style;
+    for (const key of Object.keys(state?.palette ?? {})) {
+      const color = draft.colors?.[key];
+      if (color) {
+        root.setProperty('--festival-' + key, color);
+        root.setProperty('--festival-rgb-' + key, [1, 3, 5].map((i) =>
+          parseInt(color.slice(i, i + 2), 16)).join(' '));
+      } else {
+        root.removeProperty('--festival-' + key);
+        root.removeProperty('--festival-rgb-' + key);
+      }
+    }
+
+    for (const [node, css] of previewStyles.current) node.style.cssText = css;
+    previewStyles.current.clear();
+    for (const [id, assignments] of Object.entries(draft.elementColors?.[path] ?? {})) {
+      const element = doc.querySelector('[data-festival-element="' + id + '"]');
+      if (!element) continue;
+      for (const [property, swatch] of Object.entries(assignments)) {
+        const apply = (node) => {
+          if (!previewStyles.current.has(node)) previewStyles.current.set(node, node.style.cssText);
+          node.style.setProperty(property, 'var(--festival-' + swatch + ', #' + swatch + ')', 'important');
+          if (property === 'color') node.style.setProperty('-webkit-text-fill-color', 'currentColor', 'important');
+        };
+        apply(element);
+        if (property === 'color' && !element.matches('section,.et_pb_section')) {
+          element.querySelectorAll('span,strong,em,b,i,a').forEach(apply);
+        }
+      }
+    }
+  }
+
+  useEffect(() => {
+    applyPreviewColors(frame.current?.contentDocument);
+  }, [draft.colors, draft.elementColors, path, state?.palette]);
 
   function preparePreview(event) {
     const iframe = event.currentTarget;
@@ -37,6 +76,8 @@ export default function Editor() {
     const styles = doc.createElement('style');
     styles.textContent = 'html[data-festival-pick] [data-festival-element]:hover{cursor:crosshair} html[data-festival-pick] [data-festival-selected]{outline:2px solid #5769ff!important;outline-offset:2px}';
     doc.head.append(styles);
+    previewStyles.current.clear();
+    applyPreviewColors(doc);
     doc.documentElement.toggleAttribute('data-festival-pick', iframe.dataset.mode === 'visual');
     if (selected) showSelection(doc, doc.querySelector('[data-festival-element="' + selected.id + '"]'));
     iframe.contentWindow.scrollTo(0, scroll.current);
@@ -250,7 +291,8 @@ export default function Editor() {
               const value = draft.colors?.[key] ?? '#' + key;
               return <div key={key} className="editor-color">
                 <label>{label}<input type="color" value={value}
-                  onChange={(event) => updateAppearance('colors', key, event.target.value)} /></label>
+                  onInput={(event) => updateAppearance('colors', key, event.currentTarget.value)}
+                  onChange={(event) => updateAppearance('colors', key, event.currentTarget.value)} /></label>
                 <span>{value.toUpperCase()}</span>
                 <button type="button" disabled={!draft.colors?.[key]} onClick={() => updateAppearance('colors', key)}>Reset</button>
               </div>;
