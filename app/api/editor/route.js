@@ -6,12 +6,17 @@ import sharp from 'sharp';
 import pages from '../../../lib/pages.js';
 import { canWrite, hasBlobStore, readState, saveState } from '../../../lib/editor.js';
 
-import { pageImages, palette, renderPage, validAppearance } from '../../../lib/site-render.js';
+import { listColorElements, pageImages, palette, renderPage, validAppearance } from '../../../lib/site-render.js';
 
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 
-export async function GET() {
+export async function GET(request) {
   const { state } = await readState();
+  const path = new URL(request.url).searchParams.get('elements');
+  if (path !== null) {
+    if (!Object.hasOwn(pages, path)) return json({ error: 'Unknown page.' }, 404);
+    return json({ elements: listColorElements(path, state.draft) });
+  }
   return json({
     ...state, writable: canWrite(), palette, images: pageImages,
     pages: Object.fromEntries(Object.entries(pages).map(([path, page]) => [path, page.fields])),

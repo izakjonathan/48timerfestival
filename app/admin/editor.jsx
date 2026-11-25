@@ -19,17 +19,10 @@ export default function Editor() {
   const [filter, setFilter] = useState('');
   const [tab, setTab] = useState('content');
   const [preview, setPreview] = useState('');
-  const [selected, setSelected] = useState(null);
-  const [visualTargets, setVisualTargets] = useState([]);
+  const [elementList, setElementList] = useState(null);
   const frame = useRef(null);
   const scroll = useRef(0);
   const previewStyles = useRef(new Map());
-
-  function showSelection(doc, element) {
-    const previous = doc.querySelector('[data-festival-selected]');
-    previous?.removeAttribute('data-festival-selected');
-    element?.setAttribute('data-festival-selected', '');
-  }
 
   function applyPreviewColors(doc) {
     if (!doc?.querySelector('[data-festival-element]')) return;
@@ -73,67 +66,36 @@ export default function Editor() {
     const iframe = event.currentTarget;
     const doc = iframe.contentDocument;
     if (!doc?.querySelector('[data-festival-element]')) return;
-    const styles = doc.createElement('style');
-    styles.textContent = 'html[data-festival-pick] [data-festival-element]:hover{cursor:crosshair} html[data-festival-pick] [data-festival-selected]{outline:2px solid #5769ff!important;outline-offset:2px}';
-    doc.head.append(styles);
     previewStyles.current.clear();
     applyPreviewColors(doc);
-    doc.documentElement.toggleAttribute('data-festival-pick', iframe.dataset.mode === 'visual');
-    if (selected) showSelection(doc, doc.querySelector('[data-festival-element="' + selected.id + '"]'));
     iframe.contentWindow.scrollTo(0, scroll.current);
     doc.addEventListener('scroll', () => { scroll.current = iframe.contentWindow.scrollY; }, { passive: true });
   }
 
-  const gesture = useRef(null);
-  function startPicking(event) {
-    if (!event.isPrimary || event.button !== 0) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    gesture.current = { x: event.clientX, y: event.clientY, scroll: scroll.current, moved: false };
-  }
-
-  function movePicking(event) {
-    const start = gesture.current;
-    if (!start || !event.isPrimary) return;
-    const delta = start.y - event.clientY;
-    if (!start.moved && Math.hypot(start.x - event.clientX, delta) < 8) return;
-    start.moved = true;
-    frame.current?.contentWindow.scrollTo(0, start.scroll + delta);
-  }
-
-  function finishPicking(event) {
-    if (!event.isPrimary) return;
-    const start = gesture.current;
-    gesture.current = null;
-    if (!start || start.moved || Math.hypot(start.x - event.clientX, start.y - event.clientY) >= 8) return;
-    const iframe = frame.current;
-    const doc = iframe?.contentDocument;
-    if (!doc) return;
-    const rect = iframe.getBoundingClientRect();
-    const target = doc.elementFromPoint(
-      event.clientX - rect.left - iframe.clientLeft,
-      event.clientY - rect.top - iframe.clientTop
-    )?.closest('[data-festival-element]');
-    if (!target) return;
-    const name = target.textContent.trim().replace(/\s+/g, ' ').slice(0, 70) || target.tagName.toLowerCase();
-    setSelected({ id: target.dataset.festivalElement, name });
-    showSelection(doc, target);
-  }
-
-  function updateElementColor(property, swatch) {
+  function updateElementColor(id, property, swatch) {
     setDraft((previous) => {
       const assignments = { ...previous.elementColors?.[path] };
-      const colors = { ...assignments[selected.id] };
+      const colors = { ...assignments[id] };
       if (swatch) colors[property] = swatch;
       else delete colors[property];
-      if (Object.keys(colors).length) assignments[selected.id] = colors;
-      else delete assignments[selected.id];
+      if (Object.keys(colors).length) assignments[id] = colors;
+      else delete assignments[id];
       return { ...previous, elementColors: { ...previous.elementColors, [path]: assignments } };
     });
   }
 
   useEffect(() => {
-    frame.current?.contentDocument?.documentElement.toggleAttribute('data-festival-pick', tab === 'visual');
-  }, [tab]);
+    if (tab !== 'elements') return;
+    const controller = new AbortController();
+    fetch('/api/editor?elements=' + encodeURIComponent(path), { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Could not load the page elements.');
+        const data = await response.json();
+        if (!controller.signal.aborted) setElementList({ path, items: data.elements });
+      })
+      .catch((error) => { if (!controller.signal.aborted) setStatus(error.message); });
+    return () => controller.abort();
+  }, [path, tab]);
 
   useEffect(() => {
     async function load() {
@@ -152,7 +114,7 @@ export default function Editor() {
   }, []);
 
   useEffect(() => {
-    if (!state) return;
+    if (!state || tab === 'elements') return;
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
       try {
@@ -162,18 +124,13 @@ export default function Editor() {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error('Preview unavailable.');
-        const html = await response.text();
-        setPreview(html);
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        setVisualTargets([...doc.querySelectorAll('h1[data-festival-element],h2[data-festival-element],h3[data-festival-element],p[data-festival-element],a[data-festival-element],button[data-festival-element]')]
-          .map((node) => ({ id: node.dataset.festivalElement, name: node.textContent.trim().replace(/\s+/g, ' ').slice(0, 70) }))
-          .filter(({ name }) => name));
+        setPreview(await response.text());
       } catch (error) {
         if (error.name !== 'AbortError') setStatus('Preview unavailable.');
       }
     }, 300);
     return () => { clearTimeout(timeout); controller.abort(); };
-  }, [draft, path, state]);
+  }, [draft, path, state, tab]);
 
   function updateAppearance(group, key, value) {
     setDraft((previous) => {
@@ -247,45 +204,43 @@ export default function Editor() {
     </header>
     <div className="editor-status" role="status">{status}</div>
     {state && <>
-      <div className={'editor-workspace' + (tab === 'visual' ? ' editor-workspace-visual' : '')}>
+      <div className={'editor-workspace' + (tab === 'elements' ? ' editor-workspace-visual' : '')}>
         <section className="editor-fields" aria-label="Page content">
           <nav aria-label="Editor sections" className="editor-tabs">
-            {Object.entries({ content: 'Content', visual: 'Visual colors', colors: 'Site colors', images: 'Images' }).map(([key, title]) =>
+            {Object.entries({ content: 'Content', elements: 'Element colors', colors: 'Site colors', images: 'Images' }).map(([key, title]) =>
               <button key={key} type="button" aria-pressed={tab === key}
                 onClick={() => { setTab(key); setFilter(''); }}>{title}</button>
             )}
           </nav>
-          <label>Preview page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); setSelected(null); scroll.current = 0; }}>
+          <label>Page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); scroll.current = 0; }}>
             {['English', 'Dansk'].map((language) => <optgroup key={language} label={language}>
               {Object.keys(state.pages).filter((route) => languageFor(route) === language).map((route) =>
                 <option key={route} value={route}>{labelFor(route)}</option>)}
             </optgroup>)}
           </select></label>
-          {tab === 'visual' ? <div className="editor-visual-controls">
-            <label>Select an element
-              <select value={selected?.id ?? ''} onChange={(event) => {
-                const next = visualTargets.find(({ id }) => id === event.target.value);
-                setSelected(next ?? null);
-                const doc = frame.current?.contentDocument;
-                if (doc) showSelection(doc, next ? doc.querySelector('[data-festival-element="' + next.id + '"]') : null);
-              }}>
-                <option value="">Tap the preview or choose here</option>
-                {visualTargets.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
-              </select>
-            </label>
-            {selected ? <>
-              <p className="editor-visual-selected">{selected.name}</p>
-              {Object.entries({ color: 'Text color', 'background-color': 'Background color' }).map(([property, label]) =>
-                <label key={property}>{label}
-                  <select value={draft.elementColors?.[path]?.[selected.id]?.[property] ?? ''}
-                    onChange={(event) => updateElementColor(property, event.target.value)}>
-                    <option value="">Use site style</option>
-                    {Object.entries(state.palette).map(([key, name]) =>
-                      <option key={key} value={key}>{name} · {draft.colors?.[key] ?? '#' + key}</option>)}
-                  </select>
-                </label>
-              )}
-            </> : <p>Click a heading, button, text block or section in the preview.</p>}
+          {tab === 'elements' ? <div className="editor-element-list">
+            <label>Find an element<input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} /></label>
+            {elementList?.path !== path ? <p>Loading elements…</p> : elementList.items
+              .filter(({ name, type, location }) => (name + ' ' + type + ' ' + location).toLowerCase().includes(filter.trim().toLowerCase()))
+              .map(({ id, name, type, location }) => {
+                const assignment = draft.elementColors?.[path]?.[id] ?? {};
+                return <details key={path + id}>
+                  <summary><small>{location} · {type}</small> {name}
+                    {Object.entries(assignment).map(([property, swatch]) =>
+                      <span className="editor-element-swatch" key={property} title={property + ': ' + state.palette[swatch]}
+                        style={{ background: draft.colors?.[swatch] ?? '#' + swatch }} />)}
+                  </summary>
+                  <div className="editor-element-selects">
+                    {Object.entries({ color: 'Text color', 'background-color': 'Background color' }).map(([property, label]) =>
+                      <label key={property}>{label}<select value={assignment[property] ?? ''}
+                        onChange={(event) => updateElementColor(id, property, event.target.value)}>
+                        <option value="">Use site style</option>
+                        {Object.entries(state.palette).map(([key, name]) =>
+                          <option key={key} value={key}>{name} · {draft.colors?.[key] ?? '#' + key}</option>)}
+                      </select></label>)}
+                  </div>
+                </details>;
+              })}
           </div> : tab === 'colors' ? <div className="editor-palette">
             {Object.entries(state.palette).map(([key, label]) => {
               const value = draft.colors?.[key] ?? '#' + key;
@@ -326,14 +281,9 @@ export default function Editor() {
           })}
           </>}
         </section>
-        <section className="editor-preview" aria-label="Page preview" style={{ position: 'relative' }}>
-          <iframe ref={frame} title="Page preview" src={path} srcDoc={preview || undefined} sandbox="allow-same-origin" data-mode={tab} onLoad={preparePreview} />
-          {tab === 'visual' && preview && <div aria-hidden="true"
-            style={{ position: 'absolute', zIndex: 1, inset: 0, touchAction: 'none', cursor: 'crosshair', userSelect: 'none' }}
-            onPointerDown={startPicking} onPointerMove={movePicking} onPointerUp={finishPicking}
-            onPointerCancel={() => { gesture.current = null; }}
-            onWheel={(event) => frame.current?.contentWindow.scrollBy(0, event.deltaY)} />}
-        </section>
+        {tab !== 'elements' && <section className="editor-preview" aria-label="Page preview">
+          <iframe ref={frame} title="Page preview" src={path} srcDoc={preview || undefined} sandbox="allow-same-origin" onLoad={preparePreview} />
+        </section>}
       </div>
       <footer className="editor-actions">
         <button disabled={disabled || !state.previous} onClick={() => submit('restore')}>Restore previous</button>

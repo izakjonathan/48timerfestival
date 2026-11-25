@@ -38,3 +38,7 @@ body { margin: 0; background: #171715; color: #f3f0e8; font: 15px system-ui, san
 .editor-visual-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px; }
 .editor-visual-controls label { min-width: min(100%, 190px); }
 .editor-visual-selected { max-width: 28em; overflow-wrap: anywhere; }
+.editor-element-list { max-width: 780px; }
+.editor-element-list summary small { color: #bfbcb1; margin-inline: 4px; }
+.editor-element-selects { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 10px; }
+.editor-element-swatch { display: inline-block; width: 14px; height: 14px; margin-inline-start: 6px; border: 1px solid #aaa; border-radius: 50%; vertical-align: middle; }
