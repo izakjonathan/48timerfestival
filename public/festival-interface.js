@@ -27,38 +27,40 @@
   probe.remove();
   let frame = 0;
   let lastInk;
-  function update() {
-    frame = 0;
-    if (toggle.closest('.section-transform-active')) return;
-    const rect = toggle.querySelector('strong')?.getBoundingClientRect() ?? toggle.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return;
+  function inkAt(x, y) {
     const layers = document.elementsFromPoint(x, y).filter((element) => !header.contains(element));
     const seen = new Set();
-    let surface;
-    let hasImage = false;
     for (const layer of layers) {
       for (let node = layer; node && !seen.has(node); node = node.parentElement) {
         seen.add(node);
         const style = getComputedStyle(node);
+        if (node instanceof HTMLImageElement || /(?:url|image-set)\(/.test(style.backgroundImage)) {
+          return { ink: 'var(--festival-ffffff, #fff)', image: true };
+        }
         const color = rgb(style.backgroundColor);
-        if (node instanceof HTMLImageElement || style.backgroundImage !== 'none') hasImage = true;
         if (color?.length === 3 || color?.[3] >= 0.95) {
-          surface = color;
-          break;
+          const background = luminance(color);
+          const ink = candidates.reduce((best, option) =>
+            contrast(option.light, background) > contrast(best.light, background) ? option : best
+          ).value;
+          return { ink, image: false };
         }
       }
-      if (surface || hasImage) break;
     }
+    return null;
+  }
 
-    let ink = 'var(--festival-ffffff, #fff)';
-    if (surface && !hasImage) {
-      const background = luminance(surface);
-      ink = candidates.reduce((best, option) =>
-        contrast(option.light, background) > contrast(best.light, background) ? option : best
-      ).value;
-    }
+  function update() {
+    frame = 0;
+    if (toggle.closest('.section-transform-active')) return;
+    const rect = toggle.querySelector('.festival-menu-icon')?.getBoundingClientRect();
+    if (!rect || !rect.width || !rect.height) return;
+    if (rect.left < 0 || rect.top < 0 || rect.right >= innerWidth || rect.bottom >= innerHeight) return;
+    const points = [[0.05, 0.05], [0.95, 0.05], [0.5, 0.5], [0.05, 0.95], [0.95, 0.95]];
+    const samples = points.map(([x, y]) => inkAt(rect.left + rect.width * x, rect.top + rect.height * y));
+    const first = samples[0];
+    if (!first || !samples.every((sample) => sample?.ink === first.ink && sample.image === first.image)) return;
+    const ink = first.ink;
     if (ink !== lastInk) {
       toggle.style.setProperty('--festival-menu-ink', ink);
       lastInk = ink;
