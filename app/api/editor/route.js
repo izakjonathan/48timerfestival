@@ -4,8 +4,7 @@ import sharp from 'sharp';
 import pages from '../../../content/pages.json';
 import { canWrite, readState, saveState } from '../../../lib/editor.js';
 
-import { palette } from '../../../lib/appearance.js';
-import { pageImages, renderPage, validAppearance } from '../../../lib/site-render.js';
+import { pageImages, palette, renderPage, validAppearance } from '../../../lib/site-render.js';
 
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 

@@ -130,7 +130,11 @@ export default function Editor() {
             )}
           </nav>
           {tab === 'colors' ? <div className="editor-palette">
-            {Object.entries(state.palette).map(([key, label]) => {
+            <label>Find a color<input type="search" placeholder="Name or hex code" value={filter}
+              onChange={(event) => setFilter(event.target.value)} /></label>
+            {Object.entries(state.palette).filter(([key, label]) =>
+              (label + ' #' + key + ' ' + (draft.colors?.[key] ?? '')).toLowerCase().includes(filter.trim().toLowerCase())
+            ).map(([key, label]) => {
               const value = draft.colors?.[key] ?? '#' + key;
               return <div key={key} className="editor-color">
                 <label>{label}<input type="color" value={value}

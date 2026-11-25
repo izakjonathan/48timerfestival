@@ -12,7 +12,7 @@ Push this project to a GitHub repository and import it in Vercel using the Next.
 
 ## Edit
 
-Use **Site colors** to change a shared color across the imported pages. Use **Images** to replace an image from the device’s photo or file picker. Replacements apply wherever the same imported image is used, including responsive variants, backgrounds, and gallery links. The Home page offers a desktop poster and an optional mobile poster override.
+Use **Site colors** to change a shared color across the imported pages. The palette includes the colors found in the captured stylesheets and inline styles, with equivalent color spellings grouped under the same hex code. Use **Images** to replace an image from the device’s photo or file picker. Replacements apply wherever the same imported image is used, including responsive variants, backgrounds, and gallery links. The Home page offers a desktop poster and an optional mobile poster override.
 
 **Save draft** stores changes for later. **Publish** applies them to the public pages. **Restore previous** restores the preceding publication, including its colors and images. Large photos are resized when the browser can open them. External embeds and images loaded dynamically by third-party services remain managed at their source.
 

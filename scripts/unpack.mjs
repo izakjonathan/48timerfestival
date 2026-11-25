@@ -1,6 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 
-const snapshot = new URL('../content/pages.json.gz', import.meta.url);
-const output = new URL('../content/pages.json', import.meta.url);
-writeFileSync(output, gunzipSync(readFileSync(snapshot)));
+for (const name of ['pages', 'stylesheets']) {
+  const snapshot = new URL('../content/' + name + '.json.gz', import.meta.url);
+  const output = new URL('../content/' + name + '.json', import.meta.url);
+  writeFileSync(output, gunzipSync(readFileSync(snapshot)));
+}
