@@ -4,11 +4,11 @@ Next.js migration of the English public site at https://www.48timerfestival.dk/e
 
 ## Run locally
 
-Use Node 24. Run `npm ci`, copy `.env.example` to `.env.local`, set `EDITOR_PASSWORD`, and run `npm run dev`. Visit `/en/` for the site and `/admin` for the editor. Sign in with the username `editor` and the configured password. Local drafts and publications use a gitignored JSON file unless a private Blob token is configured.
+Use Node 24. Run `npm ci`, then run `npm run dev`. Visit `/en/` for the site and `/admin` for the editor. The editor is open to anyone who can reach it. Local drafts and publications use a gitignored JSON file unless a private Blob token is configured.
 
 ## Deploy
 
-Push this project to a GitHub repository and import it in Vercel using the Next.js preset. Set `EDITOR_PASSWORD` for the deployment and connect a dedicated **private Vercel Blob** store with its `BLOB_READ_WRITE_TOKEN`. Use separate stores for preview and production if both environments need independent editorial state. The existing festival domain can continue serving WordPress during review.
+Push this project to a GitHub repository and import it in Vercel using the Next.js preset. Connect a dedicated **private Vercel Blob** store with its `BLOB_READ_WRITE_TOKEN`. Use separate stores for preview and production if both environments need independent editorial state. The existing festival domain can continue serving WordPress during review.
 
 ## Edit
 

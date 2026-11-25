@@ -18,7 +18,6 @@ export default function Editor() {
     async function load() {
       try {
         const response = await fetch('/api/editor');
-        if (response.status === 401) throw new Error('Sign in with username editor and reload.');
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
         setState(data);

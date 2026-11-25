@@ -1,20 +1,11 @@
 import { put } from '@vercel/blob';
 import sharp from 'sharp';
 import pages from '../../../content/pages.json';
-import { authorized, canWrite, readState, saveState } from '../../../lib/editor.js';
+import { canWrite, readState, saveState } from '../../../lib/editor.js';
 
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 
-function auth(request) {
-  if (!process.env.EDITOR_PASSWORD) return json({ error: 'Set EDITOR_PASSWORD to activate the editor.' }, 503);
-  if (!authorized(request)) return new Response('Sign in as editor', {
-    status: 401, headers: { 'WWW-Authenticate': 'Basic realm="Festival editor"', 'Cache-Control': 'no-store' },
-  });
-}
-
-export async function GET(request) {
-  const denied = auth(request);
-  if (denied) return denied;
+export async function GET() {
   const { state } = await readState();
   return json({
     ...state, writable: canWrite(),
@@ -43,8 +34,6 @@ function validate(draft) {
 }
 
 export async function POST(request) {
-  const denied = auth(request);
-  if (denied) return denied;
   const origin = request.headers.get('origin');
   const host = request.headers.get('host');
   if (!origin || new URL(origin).host !== host) return json({ error: 'Invalid origin.' }, 403);
