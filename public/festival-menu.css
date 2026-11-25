@@ -402,3 +402,51 @@
   font: 20px "Fjalla One", sans-serif;
   cursor: pointer;
 }
+
+@media (min-width: 768px) {
+  #et-boc #main-content .festival-poster.et_pb_section {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: clamp(12px, 2vw, 32px) !important;
+    background: var(--festival-2b141e, #ff533d) !important;
+  }
+
+  #et-boc .festival-poster > .festival-poster-image {
+    display: grid;
+    place-items: center;
+  }
+
+  #et-boc .festival-poster-image img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: min(900px, 92svh);
+    object-fit: contain;
+  }
+}
+
+#et-boc #main-content .festival-program-column { width: 100% !important; }
+#et-boc #main-content .festival-program-centered { text-align: center !important; }
+
+#et-boc a.festival-social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+#et-boc a.festival-social-icon::before { content: none !important; display: none !important; }
+
+#et-boc a.festival-social-icon svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  pointer-events: none;
+}
+
+#et-boc .section-transform-active a.festival-social-icon {
+  color: var(--festival-2b141e, #2b141e) !important;
+}
+#et-boc .et-l--footer a.festival-social-icon { color: var(--festival-000000, #222453) !important; }
