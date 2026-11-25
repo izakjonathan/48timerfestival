@@ -276,7 +276,8 @@
 .festival-logo-tint { flood-color: var(--festival-f9f5c7, #f9f5c7); }
 #et-boc .festival-header-logo { filter: url(#festival-logo-yellow); }
 
-#et-boc .et-l--footer :is(.et_pb_text_inner, .et_pb_text_inner *, .et_pb_heading_container, .et_pb_heading_container *, .et_pb_social_media_follow .icon::before) {
+#et-boc .et-l--footer :is(.et_pb_text_inner, .et_pb_text_inner *, .et_pb_heading_container, .et_pb_heading_container *),
+#et-boc .et-l--footer .et_pb_social_media_follow .icon::before {
   color: var(--festival-000000, #222453) !important;
 }
 
