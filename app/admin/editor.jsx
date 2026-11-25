@@ -40,14 +40,43 @@ export default function Editor() {
     if (selected) showSelection(doc, doc.querySelector('[data-festival-element="' + selected.id + '"]'));
     iframe.contentWindow.scrollTo(0, scroll.current);
     doc.addEventListener('scroll', () => { scroll.current = iframe.contentWindow.scrollY; }, { passive: true });
-    doc.addEventListener('click', (click) => {
+    function selectElement(element) {
+      const target = element?.closest('[data-festival-element]');
+      if (!target) return;
+      const name = target.textContent.trim().replace(/\s+/g, ' ').slice(0, 70) || target.tagName.toLowerCase();
+      setSelected({ id: target.dataset.festivalElement, name });
+      showSelection(doc, target);
+    }
+
+    let touchStart;
+    let lastTap = 0;
+    doc.addEventListener('touchstart', (event) => {
+      touchStart = iframe.dataset.mode === 'visual' && event.touches.length === 1
+        ? event.touches[0] : null;
+    }, { passive: true, capture: true });
+    doc.addEventListener('touchmove', (event) => {
+      const touch = event.touches[0];
+      if (touchStart && (event.touches.length !== 1 ||
+        Math.hypot(touch.clientX - touchStart.clientX, touch.clientY - touchStart.clientY) > 10)) {
+        touchStart = null;
+      }
+    }, { passive: true, capture: true });
+    doc.addEventListener('touchcancel', () => { touchStart = null; }, { passive: true, capture: true });
+    doc.addEventListener('touchend', (event) => {
+      const start = touchStart;
+      touchStart = null;
+      const end = event.changedTouches[0];
+      if (iframe.dataset.mode !== 'visual' || !start || !end ||
+        Math.hypot(end.clientX - start.clientX, end.clientY - start.clientY) > 10) return;
+      event.preventDefault();
+      lastTap = Date.now();
+      selectElement(doc.elementFromPoint(end.clientX, end.clientY) ?? event.target);
+    }, { passive: false, capture: true });
+    doc.addEventListener('click', (event) => {
       if (iframe.dataset.mode !== 'visual') return;
-      click.preventDefault();
-      const element = click.target.closest('[data-festival-element]');
-      if (!element) return;
-      const name = element.textContent.trim().replace(/\s+/g, ' ').slice(0, 70) || element.tagName.toLowerCase();
-      setSelected({ id: element.dataset.festivalElement, name });
-      showSelection(doc, element);
+      event.preventDefault();
+      if (Date.now() - lastTap < 500) return;
+      selectElement(event.target);
     }, true);
   }
 
