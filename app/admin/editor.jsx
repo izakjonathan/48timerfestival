@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
-const labelFor = (path) => path === '/en/' ? 'Home' : path.split('/').filter(Boolean).at(-1).replaceAll('-', ' ');
+const languageFor = (path) => path.startsWith('/en/') ? 'English' : 'Dansk';
+const labelFor = (path) => {
+  if (path === '/en/') return 'Home';
+  if (path === '/') return 'Forside';
+  return path.split('/').filter(Boolean).at(-1).replaceAll('-', ' ');
+};
 const messages = { save: 'Draft saved.', publish: 'Published.', restore: 'Previous publication restored.' };
 
 export default function Editor() {
@@ -129,12 +134,14 @@ export default function Editor() {
                 onClick={() => { setTab(key); setFilter(''); }}>{title}</button>
             )}
           </nav>
+          <label>Preview page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); }}>
+            {['English', 'Dansk'].map((language) => <optgroup key={language} label={language}>
+              {Object.keys(state.pages).filter((route) => languageFor(route) === language).map((route) =>
+                <option key={route} value={route}>{labelFor(route)}</option>)}
+            </optgroup>)}
+          </select></label>
           {tab === 'colors' ? <div className="editor-palette">
-            <label>Find a color<input type="search" placeholder="Name or hex code" value={filter}
-              onChange={(event) => setFilter(event.target.value)} /></label>
-            {Object.entries(state.palette).filter(([key, label]) =>
-              (label + ' #' + key + ' ' + (draft.colors?.[key] ?? '')).toLowerCase().includes(filter.trim().toLowerCase())
-            ).map(([key, label]) => {
+            {Object.entries(state.palette).map(([key, label]) => {
               const value = draft.colors?.[key] ?? '#' + key;
               return <div key={key} className="editor-color">
                 <label>{label}<input type="color" value={value}
@@ -144,9 +151,6 @@ export default function Editor() {
               </div>;
             })}
           </div> : <>
-          <label>Page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); }}>
-            {Object.keys(state.pages).map((route) => <option key={route} value={route}>{labelFor(route)}</option>)}
-          </select></label>
           <label>Find a field<input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} /></label>
           {tab === 'images' ? images.map(([key, image]) => <details key={path + key}>
             <summary>{image.label}</summary>

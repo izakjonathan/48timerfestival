@@ -1,7 +1,7 @@
 import { put } from '@vercel/blob';
 import { mkdir, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
-import pages from '../../../content/pages.json';
+import pages from '../../../lib/pages.js';
 import { canWrite, hasBlobStore, readState, saveState } from '../../../lib/editor.js';
 
 import { pageImages, palette, renderPage, validAppearance } from '../../../lib/site-render.js';

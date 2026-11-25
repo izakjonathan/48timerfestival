@@ -4,7 +4,7 @@ export default {
   skipTrailingSlashRedirect: true,
   async rewrites() {
     return {
-      fallback: [{ source: '/festival-assets/:asset*', destination: origin + '/:asset*' }],
+      afterFiles: [{ source: '/festival-assets/:asset*', destination: origin + '/:asset*' }],
     };
   },
 };

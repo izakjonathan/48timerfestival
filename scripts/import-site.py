@@ -1,5 +1,7 @@
 """Capture public festival pages and localize their same-origin static assets."""
+import argparse
 import concurrent.futures
+import gzip
 import json
 import pathlib
 import re
@@ -27,8 +29,8 @@ def localize(source, assets):
         return '/festival-assets' + path
     return ASSET.sub(replace, source)
 
-def page(path):
-    url = ORIGIN + '/en/' + path
+def page(path, prefix):
+    url = ORIGIN + prefix + path
     doc = html.document_fromstring(fetch(url))
     assets = set()
     fields = {}
@@ -55,7 +57,7 @@ def page(path):
     source = localize(html.tostring(doc, encoding='unicode', doctype='<!doctype html>'), assets)
     for field in fields.values():
         field['value'] = localize(field['value'], assets) if field['kind'] == 'image' else field['value']
-    return '/en/' + path, {'html': source, 'fields': fields}, assets
+    return prefix + path, {'html': source, 'fields': fields}, assets
 
 def asset(path):
     url = ORIGIN + path
@@ -82,21 +84,36 @@ def asset(path):
     target.write_bytes(data)
     return None, refs
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=12) as pool:
-    pages = {}
-    pending = set()
-    for route, record, assets in pool.map(page, PATHS):
-        pages[route] = record
-        pending.update(assets)
-    (ROOT / 'content' / 'pages.json').write_text(json.dumps(pages, ensure_ascii=False))
-    seen = set()
-    missing = []
-    while pending:
-        batch = sorted(pending - seen)
-        seen.update(batch)
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--danish', action='store_true', help='Capture the Danish pages for the bilingual site')
+    parser.add_argument('--pages-only', action='store_true', help='Write the snapshot and skip downloading assets')
+    options = parser.parse_args()
+    prefix = '/' if options.danish else '/en/'
+    name = 'pages-da' if options.danish else 'pages'
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+        pages = {}
         pending = set()
-        for error, refs in pool.map(asset, batch):
-            if error:
-                missing.append(error)
-            pending.update(refs - seen)
-    print(f'{len(pages)} pages, {len(seen) - len(missing)} assets; missing: {missing}')
+        for route, record, assets in pool.map(lambda path: page(path, prefix), PATHS):
+            pages[route] = record
+            pending.update(assets)
+        snapshot = json.dumps(pages, ensure_ascii=False).encode()
+        (ROOT / 'content' / (name + '.json.gz')).write_bytes(gzip.compress(snapshot, mtime=0))
+        if options.pages_only:
+            print(f'{len(pages)} pages')
+            return
+        seen = set()
+        missing = []
+        while pending:
+            batch = sorted(pending - seen)
+            seen.update(batch)
+            pending = set()
+            for error, refs in pool.map(asset, batch):
+                if error:
+                    missing.append(error)
+                pending.update(refs - seen)
+        print(f'{len(pages)} pages, {len(seen) - len(missing)} assets; missing: {missing}')
+
+if __name__ == '__main__':
+    main()
