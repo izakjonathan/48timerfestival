@@ -288,3 +288,29 @@
 #et-boc #main-content .festival-countdown :is(h1, h1 span, .hurrytimer-cdt__time, .hurrytimer-cdt__label, .hurrytimer-cdt__sep) {
   color: var(--festival-000000, #222453) !important;
 }
+
+#et-boc .et-l--header .section-transform.section-transform-active {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 99999 !important;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--festival-f9f5c7, #f9f5c7) !important;
+}
+
+#et-boc .et-l--header .section-transform-active :is(#menu-open, #menu-open strong, .menu-item-click p, .menu-item-click strong) {
+  color: var(--festival-2b141e, #2b141e) !important;
+}
+
+#et-boc .et-l--header .section-transform-active .et_pb_text.menu-item-click {
+  border-color: var(--festival-2b141e, #2b141e) !important;
+}
+
+#et-boc #main-content [data-festival-program],
+#et-boc #main-content [data-festival-program] span {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
