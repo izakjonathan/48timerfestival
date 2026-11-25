@@ -43,3 +43,6 @@ body { margin: 0; background: #171715; color: #f3f0e8; font: 15px system-ui, san
 .editor .editor-element-row { grid-template-columns: minmax(0, 1fr) minmax(140px, 220px); align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #393830; overflow-wrap: anywhere; }
 @media (max-width: 540px) { .editor .editor-element-row { grid-template-columns: 1fr; } }
 .editor-element-swatch { display: inline-block; width: 14px; height: 14px; margin-inline-start: 6px; border: 1px solid #aaa; border-radius: 50%; vertical-align: middle; }
+.editor-role-group { margin: 0 0 18px; padding: 10px 12px 4px; border: 1px solid #393830; border-radius: 6px; }
+.editor-role-group legend { padding-inline: 6px; color: #e5e1d7; }
+.editor-actions { flex-wrap: wrap; }

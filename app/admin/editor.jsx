@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { colorRoles, swatchName } from '../../lib/color-roles.js';
 
 const languageFor = (path) => path.startsWith('/en/') ? 'English' : 'Dansk';
 const labelFor = (path) => {
@@ -17,7 +18,7 @@ export default function Editor() {
   const [status, setStatus] = useState('Loading editor…');
   const [pending, setPending] = useState(false);
   const [filter, setFilter] = useState('');
-  const [tab, setTab] = useState('content');
+  const [tab, setTab] = useState('roles');
   const [preview, setPreview] = useState('');
   const [elementList, setElementList] = useState(null);
   const frame = useRef(null);
@@ -114,7 +115,7 @@ export default function Editor() {
   }, []);
 
   useEffect(() => {
-    if (!state || tab === 'elements') return;
+    if (!state || tab === 'elements' || tab === 'roles') return;
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
       try {
@@ -204,10 +205,10 @@ export default function Editor() {
     </header>
     <div className="editor-status" role="status">{status}</div>
     {state && <>
-      <div className={'editor-workspace' + (tab === 'elements' ? ' editor-workspace-visual' : '')}>
+      <div className={'editor-workspace' + (['elements', 'roles'].includes(tab) ? ' editor-workspace-visual' : '')}>
         <section className="editor-fields" aria-label="Page content">
           <nav aria-label="Editor sections" className="editor-tabs">
-            {Object.entries({ content: 'Content', elements: 'Element colors', colors: 'Site colors', images: 'Images' }).map(([key, title]) =>
+            {Object.entries({ roles: 'Color roles', content: 'Content', elements: 'Individual text', colors: 'Site colors', images: 'Images' }).map(([key, title]) =>
               <button key={key} type="button" aria-pressed={tab === key}
                 onClick={() => { setTab(key); setFilter(''); }}>{title}</button>
             )}
@@ -218,7 +219,27 @@ export default function Editor() {
                 <option key={route} value={route}>{labelFor(route)}</option>)}
             </optgroup>)}
           </select></label>
-          {tab === 'elements' ? <div className="editor-element-list">
+          {tab === 'roles' ? <div className="editor-element-list">
+            {['Sitewide', 'Homepage', 'Menu', 'Footer'].map((group) => <fieldset key={group} className="editor-role-group">
+              <legend>{group}</legend>
+              {Object.entries(colorRoles).filter(([, role]) => role.group === group).map(([id, role]) => {
+                const value = draft.colorRoles?.[id] ?? '';
+                return <label key={id} className="editor-element-row">
+                  <span>{role.name}{value && <span className="editor-element-swatch"
+                    style={{ background: draft.colors?.[value] ?? '#' + value }} />}</span>
+                  <select value={value} onChange={(event) => updateAppearance('colorRoles', id, event.target.value)}>
+                    <option value="">{role.defaultLabel ?? 'Use site style'}</option>
+                    {Object.entries(state.palette).map(([key, name]) => {
+                      const hex = draft.colors?.[key] ?? '#' + key;
+                      const duplicate = Object.keys(state.palette).some((other) => other !== key &&
+                        (draft.colors?.[other] ?? '#' + other).toLowerCase() === hex.toLowerCase());
+                      return <option key={key} value={key}>{swatchName(hex)} · {hex.toUpperCase()}{duplicate ? ' · ' + name : ''}</option>;
+                    })}
+                  </select>
+                </label>;
+              })}
+            </fieldset>)}
+          </div> : tab === 'elements' ? <div className="editor-element-list">
             <label>Find an element<input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} /></label>
             {elementList?.path !== path ? <p>Loading elements…</p> : elementList.items
               .filter(({ name, type, location }) => (name + ' ' + type + ' ' + location).toLowerCase().includes(filter.trim().toLowerCase()))
@@ -276,11 +297,16 @@ export default function Editor() {
           })}
           </>}
         </section>
-        {tab !== 'elements' && <section className="editor-preview" aria-label="Page preview">
+        {!['elements', 'roles'].includes(tab) && <section className="editor-preview" aria-label="Page preview">
           <iframe ref={frame} title="Page preview" src={path} srcDoc={preview || undefined} sandbox="allow-same-origin" onLoad={preparePreview} />
         </section>}
       </div>
       <footer className="editor-actions">
+        <form action="/api/editor" method="post" target="_blank" rel="noopener">
+          <input type="hidden" name="path" value={path} />
+          <input type="hidden" name="draft" value={JSON.stringify(draft)} />
+          <button type="submit">Preview draft ↗</button>
+        </form>
         <button disabled={disabled || !state.previous} onClick={() => submit('restore')}>Restore previous</button>
         <button disabled={disabled} onClick={() => submit('save')}>Save draft</button>
         <button className="primary" disabled={disabled} onClick={() => submit('publish')}>Publish</button>

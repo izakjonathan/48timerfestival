@@ -450,3 +450,11 @@
   color: var(--festival-2b141e, #2b141e) !important;
 }
 #et-boc .et-l--footer a.festival-social-icon { color: var(--festival-000000, #222453) !important; }
+
+#et-boc .et-l--header .section-transform:not(.section-transform-active) #menu-open[data-festival-menu-icon-closed] .festival-menu-icon {
+  color: var(--festival-menu-icon-closed) !important;
+}
+
+#et-boc .et-l--header .section-transform-active #menu-open[data-festival-menu-icon-open] .festival-menu-icon {
+  color: var(--festival-menu-icon-open) !important;
+}

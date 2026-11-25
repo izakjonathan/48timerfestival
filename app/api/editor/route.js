@@ -1,3 +1,4 @@
+import { colorRoles } from '../../../lib/color-roles.js';
 import { revalidateTag } from 'next/cache';
 import { publicPageTag } from '../../../lib/public-page-cache.js';
 import { put } from '@vercel/blob';
@@ -31,6 +32,9 @@ function validate(draft) {
   if (!draft || typeof draft !== 'object' || Array.isArray(draft)) return false;
   return Object.entries(draft).every(([route, edits]) => {
     if (!edits || typeof edits !== 'object' || Array.isArray(edits)) return false;
+    if (route === 'colorRoles') return Object.entries(edits).every(([role, swatch]) =>
+      Object.hasOwn(colorRoles, role) && typeof swatch === 'string' && Object.hasOwn(palette, swatch)
+    );
     if (route === 'elementColors') return Object.entries(edits).every(([path, assignments]) =>
       Object.hasOwn(pages, path) && assignments && typeof assignments === 'object' && !Array.isArray(assignments) &&
       Object.entries(assignments).every(([id, values]) =>
@@ -62,13 +66,19 @@ export async function POST(request) {
     return uploadImage(request);
   }
   const body = await request.text();
-  if (body.length > 500000) return json({ error: 'Draft is too large.' }, 413);
+  const previewTab = request.headers.get('content-type')?.startsWith('application/x-www-form-urlencoded');
+  if (body.length > (previewTab ? 1500000 : 500000)) return json({ error: 'Draft is too large.' }, 413);
   let input;
-  try { input = JSON.parse(body); } catch { return json({ error: 'Invalid JSON.' }, 400); }
+  try {
+    if (previewTab) {
+      const form = new URLSearchParams(body);
+      input = { action: 'preview', path: form.get('path'), draft: JSON.parse(form.get('draft')) };
+    } else input = JSON.parse(body);
+  } catch { return json({ error: 'Invalid JSON.' }, 400); }
   if (input?.action === 'preview') {
     if (!Object.hasOwn(pages, input.path) || !validate(input.draft)) return json({ error: 'Invalid preview.' }, 400);
     return new Response(renderPage(input.path, input.draft, { preview: true }), {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
+      headers: { 'Content-Type': (previewTab ? 'text/html' : 'text/plain') + '; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
     });
   }
   if (!canWrite()) return json({ error: 'Connect a private Vercel Blob store to enable publishing.' }, 503);
