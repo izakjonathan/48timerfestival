@@ -1,6 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { googleFonts, resolveTypography, typographyLimits } from '../../lib/design.js';
+
+const weightNames = { 100: 'Thin', 200: 'Extra light', 300: 'Light', 400: 'Regular', 500: 'Medium', 600: 'Semibold', 700: 'Bold', 800: 'Extra bold', 900: 'Black' };
+const numberOptions = (min, max, step, current, defaultValue) => [...new Set([
+  ...Array.from({ length: Math.round((max - min) / step) + 1 }, (_, index) => Number((min + index * step).toFixed(3))),
+  current, defaultValue,
+])].sort((a, b) => a - b);
 
 const languageFor = (path) => path.startsWith('/en/') ? 'English' : 'Dansk';
 const labelFor = (path) => {
@@ -42,6 +49,25 @@ export default function Editor() {
       else delete edits[key];
       return { ...previous, [group]: edits };
     });
+  }
+
+  function updateFont(role, family) {
+    setDraft(previous => {
+      const fonts = { ...previous.fonts };
+      if (family) fonts[role] = family;
+      else delete fonts[role];
+      const typography = { ...previous.typography, [role]: { ...previous.typography?.[role] } };
+      const { weight } = resolveTypography(role, fonts, typography);
+      if (typography[role].weight !== undefined) typography[role].weight = weight;
+      return { ...previous, fonts, typography };
+    });
+  }
+
+  function updateTypography(role, property, value) {
+    setDraft(previous => ({
+      ...previous,
+      typography: { ...previous.typography, [role]: { ...previous.typography?.[role], [property]: Number(value) } },
+    }));
   }
 
   async function submit(action) {
@@ -129,13 +155,38 @@ export default function Editor() {
             })}
           </div>}
           {tab === 'fonts' && <div className="editor-settings">
-            {Object.entries(state.fontRoles).map(([id, role]) => <label className="editor-setting" key={id}>
-              <span>{role.label}<small>Sitewide</small></span>
-              <select value={draft.fonts?.[id] ?? ''} onChange={(event) => updateAppearance('fonts', id, event.target.value)}>
-                <option value="">Default · {role.defaultFamily}</option>
-                {state.googleFonts.map((family) => <option value={family} key={family}>{family}</option>)}
-              </select>
-            </label>)}
+            {Object.entries(state.fontRoles).map(([id, role]) => {
+              const settings = resolveTypography(id, draft.fonts, draft.typography);
+              const available = googleFonts[settings.family].weights;
+              return <fieldset className="editor-font-card" key={id}>
+                <legend>{role.label}</legend>
+                <label>Font family
+                  <select value={draft.fonts?.[id] ?? ''} onChange={event => updateFont(id, event.target.value)}>
+                    <option value="">Default · {role.defaultFamily}</option>
+                    {state.googleFonts.map(family => <option value={family} key={family}>{family}</option>)}
+                  </select>
+                </label>
+                <div className="editor-font-metrics">
+                  <label>Font weight
+                    <select value={settings.weight} onChange={event => updateTypography(id, 'weight', event.target.value)}>
+                      {available.map(weight => <option value={weight} key={weight}>{weight} · {weightNames[weight]}</option>)}
+                    </select>
+                  </label>
+                  <label>Line height
+                    <select value={settings.lineHeight} onChange={event => updateTypography(id, 'lineHeight', event.target.value)}>
+                      {numberOptions(typographyLimits.lineHeight.min, typographyLimits.lineHeight.max, .05, settings.lineHeight, role.lineHeight).map(value =>
+                        <option value={value} key={value}>{value.toFixed(2)}{value === role.lineHeight ? ' · Default' : ''}</option>)}
+                    </select>
+                  </label>
+                  <label>Letter spacing
+                    <select value={settings.letterSpacing} onChange={event => updateTypography(id, 'letterSpacing', event.target.value)}>
+                      {numberOptions(typographyLimits.letterSpacing.min, typographyLimits.letterSpacing.max, .005, settings.letterSpacing, role.letterSpacing).map(value =>
+                        <option value={value} key={value}>{Number((value * 100).toFixed(1))}%{value === role.letterSpacing ? ' · Default' : ''}</option>)}
+                    </select>
+                  </label>
+                </div>
+              </fieldset>;
+            })}
           </div>}
           {tab === 'images' && <>
           <label>Find an image<input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} /></label>

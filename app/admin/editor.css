@@ -27,3 +27,11 @@ body { margin: 0; background: #171715; color: #f3f0e8; font: 15px system-ui, san
   .editor .editor-setting { grid-template-columns: 1fr; gap: 5px; }
   .editor-setting small { display: inline; margin-inline-start: 6px; }
 }
+
+.editor-font-card { margin: 0 0 20px; min-width: 0; padding: 16px; border: 1px solid #393830; border-radius: 8px; }
+.editor-font-card legend { font-weight: 600; padding: 0 6px; }
+.editor-font-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.editor-font-metrics label { margin: 0; }
+@media (max-width: 540px) {
+  .editor-font-metrics { grid-template-columns: 1fr; gap: 10px; }
+}

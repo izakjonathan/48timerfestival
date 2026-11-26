@@ -19,17 +19,21 @@ body[data-festival-site] .festival-language a {
 body[data-festival-site] #page-container #et-boc,
 body[data-festival-site] #page-container #et-boc :is(.et_pb_text_inner, .et_pb_toggle_content, .et_pb_blurb_description, .festival-registration, .hurrytimer-cdt, a, strong, em, b, small, .leaflet-popup-content, p, ul, ol, li, blockquote, figcaption, label, input, select, textarea):where(:not([class*="et-pb-icon"]):not(.et_pb_font_icon)) {
   font-family: var(--festival-type-body) !important;
+  font-weight: var(--festival-weight-body, 400) !important;
+  line-height: var(--festival-line-height-body, 1.6) !important;
+  letter-spacing: var(--festival-letter-spacing-body, 0em) !important;
 }
 
 body[data-festival-site] #page-container #et-boc :is(.et_pb_text_inner p, .et_pb_text_inner li, .et_pb_blurb_description, .et_pb_toggle_content, .festival-registration label, .festival-registration p, figcaption) {
   font-size: clamp(1rem, .96rem + .2vw, 1.125rem) !important;
-  line-height: 1.6 !important;
+  line-height: var(--festival-line-height-body, 1.6) !important;
   overflow-wrap: break-word;
 }
 
 body[data-festival-site] #page-container #et-boc .et_pb_text_inner :is(p, li) :is(span, a, strong, em, b, small):not(.festival-menu-link),
 body[data-festival-site] #page-container #et-boc :is(h1, h2, h3, h4, h5, h6) :is(span, a, strong, em, b, small) {
   font-family: inherit !important;
+  font-weight: inherit !important;
   font-size: inherit !important;
   line-height: inherit !important;
   letter-spacing: inherit !important;
@@ -39,8 +43,8 @@ body[data-festival-site] #page-container #et-boc h1 {
   font-family: var(--festival-type-h1) !important;
   font-size: clamp(2rem, 1.3rem + 2.5vw, 3.75rem) !important;
   font-weight: var(--festival-weight-h1, 400) !important;
-  line-height: 1.12 !important;
-  letter-spacing: .005em !important;
+  line-height: var(--festival-line-height-h1, 1.12) !important;
+  letter-spacing: var(--festival-letter-spacing-h1, .005em) !important;
   overflow-wrap: break-word;
 }
 
@@ -48,8 +52,8 @@ body[data-festival-site] #page-container #et-boc :is(h2, h3, h4, h5, h6) {
   font-family: var(--festival-type-h2) !important;
   font-size: clamp(1.375rem, 1.15rem + 1.2vw, 2.4rem) !important;
   font-weight: var(--festival-weight-h2, 400) !important;
-  line-height: 1.2 !important;
-  letter-spacing: .01em !important;
+  line-height: var(--festival-line-height-h2, 1.2) !important;
+  letter-spacing: var(--festival-letter-spacing-h2, .01em) !important;
   overflow-wrap: break-word;
 }
 
@@ -59,7 +63,7 @@ body[data-festival-site] #page-container #et-boc :is(h3, h4, h5, h6) {
 
 body[data-festival-site] #page-container #et-boc .festival-home-cards h1 {
   font-size: clamp(1.45rem, 1.1rem + 1.3vw, 2.5rem) !important;
-  line-height: 1.13 !important;
+  line-height: var(--festival-line-height-h1, 1.12) !important;
   padding: 0 .35em;
 }
 
@@ -75,8 +79,8 @@ body[data-festival-site] #page-container #et-boc :is(a.et_pb_button, button, inp
 body[data-festival-site] .festival-language a {
   font-family: var(--festival-type-buttons) !important;
   font-weight: var(--festival-weight-buttons, 400) !important;
-  line-height: 1.18 !important;
-  letter-spacing: .025em !important;
+  line-height: var(--festival-line-height-buttons, 1.18) !important;
+  letter-spacing: var(--festival-letter-spacing-buttons, .025em) !important;
 }
 
 body[data-festival-site] #page-container #et-boc :is(a.et_pb_button, button, input[type="submit"]) {
@@ -93,6 +97,9 @@ body[data-festival-site] #page-container #et-boc .et_pb_section_2_tb_footer {
 
 body[data-festival-site] #page-container #et-boc .festival-date-track {
   font-family: var(--festival-type-h2) !important;
+  font-weight: var(--festival-weight-h2, 400) !important;
+  line-height: var(--festival-line-height-h2, 1.2) !important;
+  letter-spacing: var(--festival-letter-spacing-h2, .01em) !important;
   font-variant-numeric: tabular-nums;
   font-size: clamp(1.5rem, 1.2rem + 1.3vw, 2.5rem) !important;
 }
@@ -126,8 +133,23 @@ body[data-festival-site] {
 
 body[data-festival-site] #page-container #et-boc :where(span, strong, em, b, small):not(.et-pb-icon):not(.et_pb_font_icon):not(.festival-menu-icon):not(.festival-date-track) {
   font-family: inherit !important;
+  font-weight: inherit !important;
+  line-height: inherit !important;
+  letter-spacing: inherit !important;
 }
 
 body[data-festival-site] #page-container #et-boc .section-transform-active .menu-item-click {
   border-color: var(--festival-ink) !important;
+}
+
+body[data-festival-site] #page-container #et-boc .et_pb_text_inner :is(p, li) :is(strong, b):not(.festival-menu-link *),
+body[data-festival-site] #page-container #et-boc .festival-registration label {
+  font-weight: bolder !important;
+}
+
+body[data-festival-site] #page-container #et-boc .festival-countdown :is(.hurrytimer-cdt__time, .hurrytimer-cdt__label, .hurrytimer-cdt__sep) {
+  font-family: var(--festival-type-body) !important;
+  font-weight: var(--festival-weight-body, 400) !important;
+  line-height: var(--festival-line-height-body, 1.6) !important;
+  letter-spacing: var(--festival-letter-spacing-body, 0em) !important;
 }

@@ -1,4 +1,4 @@
-import { fontRoles, googleFonts, sectionColors } from '../../../lib/design.js';
+import { fontRoles, googleFonts, sectionColors, validTypography } from '../../../lib/design.js';
 import { getSectionsByPage, validSectionColors } from '../../../lib/sections.js';
 import { revalidateTag } from 'next/cache';
 import { publicPageTag } from '../../../lib/public-page-cache.js';
@@ -30,6 +30,7 @@ function validate(draft) {
   return Object.entries(draft).every(([route, edits]) => {
     if (!edits || typeof edits !== 'object' || Array.isArray(edits)) return false;
     if (route === 'sectionBackgrounds') return validSectionColors(edits);
+    if (route === 'typography') return validTypography(draft.fonts ?? {}, edits);
     if (route === 'fonts') return Object.entries(edits).every(([role, family]) =>
       Object.hasOwn(fontRoles, role) && typeof family === 'string' && Object.hasOwn(googleFonts, family)
     );
