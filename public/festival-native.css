@@ -173,3 +173,6 @@
 
 .fn-header .fn-desktop-nav a, .fn-header .fn-mobile-nav a, .fn-header .fn-languages a, .fn-footer a { color: var(--fn-ink) !important; -webkit-text-fill-color: currentColor !important; text-shadow: none !important; }
 .fn-native .fn-card h3 { margin: 0; }
+
+.fn-arrow { display: inline-block; width: 1.15em; height: 1.15em; flex: none; vertical-align: -.16em; }
+.fn-card .fn-arrow, .fn-menu-link .fn-arrow { width: 1.35em; height: 1.35em; }

@@ -33,8 +33,12 @@ function Picture({ src, alt, sizes, eager = false, className, mobile }) {
   </picture>;
 }
 
+function Arrow() {
+  return <svg className="fn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M6 18 18 6M7 6h11v11" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
+
 function Button({ href, children, secondary = false }) {
-  return <a className={'fn-button' + (secondary ? ' fn-button-outline' : '')} href={href}>{children}<span aria-hidden="true">↗</span></a>;
+  return <a className={'fn-button' + (secondary ? ' fn-button-outline' : '')} href={href}>{children}<Arrow/></a>;
 }
 
 function Countdown({ lang, document }) {
@@ -68,14 +72,14 @@ function Home({ lang, document }) {
     </section>
     <div className="fn-ticker" style={background(document,'/et_pb_section_1','var(--fn-teal)')}>
       <span className="fn-sr-only">{localized(lang,'14.–16. maj 2027 · Nørrebro','14–16 May 2027 · Nørrebro')}</span>
-      <div className="fn-ticker-track" aria-hidden="true">{[0,1].map(copy => <div key={copy}>{[0,1,2,3].map(i => <span key={i}>{localized(lang,'14.–16. MAJ 2027','14–16 MAY 2027')} <b>✳</b> NØRREBRO</span>)}</div>)}</div>
+      <div className="fn-ticker-track" aria-hidden="true">{[0,1].map(copy => <div key={copy}>{[0,1,2,3].map(i => <span key={i}>{localized(lang,'14.–16. MAJ 2027','14–16 MAY 2027')} <b aria-hidden="true">·</b> NØRREBRO</span>)}</div>)}</div>
     </div>
     <section className="fn-section" style={background(document,'/et_pb_section_2','var(--fn-coral)')}>
       <div className="fn-wrap fn-program-promo" data-fn-reveal>
         <h2 className="fn-display">{localized(lang,'Program','Programme')}</h2>
         <div><h3>{events.length ? localized(lang,'Find din næste festivaloplevelse','Find your next festival experience') : localized(lang,'Programmet er på vej!','The programme is on its way!')}</h3>
           <p>{events.length ? localized(lang,'Udforsk arrangementerne efter dag, kategori og sted.','Explore events by day, category and location.') : localized(lang,'Programmet offentliggøres efter tilmeldingsfristen. Følg med, eller vær med til at skabe festivalen.','The programme will be announced after the registration deadline. Follow along or help create the festival.')}</p>
-          <div className="fn-actions"><Button href={routeFor(lang,'program')}>{localized(lang,'Se program','View programme')}</Button><a className="fn-text-link" href="https://www.facebook.com/48TimerFestival/events">{localized(lang,'Følg os på Facebook','Follow us on Facebook')} ↗</a></div>
+          <div className="fn-actions"><Button href={routeFor(lang,'program')}>{localized(lang,'Se program','View programme')}</Button><a className="fn-text-link" href="https://www.facebook.com/48TimerFestival/events">{localized(lang,'Følg os på Facebook','Follow us on Facebook')} <Arrow/></a></div>
         </div>
       </div>
     </section>
@@ -87,9 +91,9 @@ function Home({ lang, document }) {
             ['bliv-aktoer','Bliv aktør','Get involved',photos[0]],
             ['program','Program','Programme',photos[1]],
             ['galleri','Galleri','Gallery',photos[2]],
-          ].map(([path,da,en,src]) => <a className="fn-card" data-fn-reveal key={path} href={routeFor(lang,path)}><Picture src={image(document,src)} alt="" sizes="(max-width: 700px) 90vw, 32vw"/><div><h3>{localized(lang,da,en)}</h3><span aria-hidden="true">↗</span></div></a>)}
+          ].map(([path,da,en,src]) => <a className="fn-card" data-fn-reveal key={path} href={routeFor(lang,path)}><Picture src={image(document,src)} alt="" sizes="(max-width: 700px) 90vw, 32vw"/><div><h3>{localized(lang,da,en)}</h3><Arrow/></div></a>)}
         </div>
-        <div className="fn-about" data-fn-reveal><h2>{localized(lang,'Om 48TIMER Festival','About 48TIMER Festival')}</h2><div><p>{localized(lang,'48TIMER Festival er en årlig kulturfestival på Nørrebro i midten af maj. Sammen med besøgende fra hele København fejrer vi alt det særlige ved vores bydel over en hel weekend – det personlige, nørdede og skæve, som Nørrebro rummer.','48TIMER Festival is an annual cultural festival in Nørrebro in mid-May. Together with visitors from across Copenhagen, we celebrate everything special about our neighbourhood over an entire weekend: its personal, quirky and creative sides.')}</p><a className="fn-text-link" href={routeFor(lang,'om-festivalen')}>{localized(lang,'Læs mere om festivalen','More about the festival')} ↗</a></div></div>
+        <div className="fn-about" data-fn-reveal><h2>{localized(lang,'Om 48TIMER Festival','About 48TIMER Festival')}</h2><div><p>{localized(lang,'48TIMER Festival er en årlig kulturfestival på Nørrebro i midten af maj. Sammen med besøgende fra hele København fejrer vi alt det særlige ved vores bydel over en hel weekend – det personlige, nørdede og skæve, som Nørrebro rummer.','48TIMER Festival is an annual cultural festival in Nørrebro in mid-May. Together with visitors from across Copenhagen, we celebrate everything special about our neighbourhood over an entire weekend: its personal, quirky and creative sides.')}</p><a className="fn-text-link" href={routeFor(lang,'om-festivalen')}>{localized(lang,'Læs mere om festivalen','More about the festival')} <Arrow/></a></div></div>
       </div>
     </section>
     <section className="fn-section fn-sponsors" style={background(document,'/et_pb_section_4','var(--fn-teal)')}>
@@ -125,7 +129,7 @@ function Program({ lang, document }) {
               <div className="fn-event-meta"><span>{categories[event.category][lang]}</span><span>{dayLabel(event.day,lang)} · {event.start}{event.end && '–'+event.end}</span></div>
               <h2>{en ? event.titleEn : event.titleDa}</h2><p className="fn-event-venue">{event.venue}{event.address && ' · ' + event.address}</p>
               {(en ? event.descriptionEn : event.descriptionDa) && <p>{en ? event.descriptionEn : event.descriptionDa}</p>}
-              {event.link && <a className="fn-text-link" href={event.link} target="_blank" rel="noreferrer">{localized(lang,'Læs mere','More information')} ↗</a>}
+              {event.link && <a className="fn-text-link" href={event.link} target="_blank" rel="noreferrer">{localized(lang,'Læs mere','More information')} <Arrow/></a>}
             </article>)}
           </div>
           <p data-fn-no-results hidden>{localized(lang,'Ingen arrangementer matcher dine filtre.','No events match your filters.')}</p>

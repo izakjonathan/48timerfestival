@@ -219,8 +219,8 @@ export default function Editor() {
                 <label>Category<select value={event.category} onChange={e => updateEvent(id,'category',e.target.value)}>
                   {Object.entries(categories).map(([key,category]) => <option key={key} value={key}>{category.en}</option>)}
                 </select></label>
-                <label>Start time<input type="time" value={event.start} onChange={e => updateEvent(id,'start',e.target.value)}/></label>
-                <label>End time (optional)<input type="time" value={event.end} onChange={e => updateEvent(id,'end',e.target.value)}/></label>
+                <label>Start time<input type="time" value={event.start} onInput={e => updateEvent(id,'start',e.currentTarget.value)} onChange={e => updateEvent(id,'start',e.target.value)}/></label>
+                <label>End time (optional)<input type="time" value={event.end} onInput={e => updateEvent(id,'end',e.currentTarget.value)} onChange={e => updateEvent(id,'end',e.target.value)}/></label>
                 {[
                   ['titleDa','Title · Danish'], ['titleEn','Title · English'], ['venue','Venue'], ['address','Address'],
                   ['link','Event link (optional)'],
