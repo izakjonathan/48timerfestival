@@ -271,13 +271,8 @@
 }
 
 /* 2027 editorial system. Dark-blue type and the original five poster colours. */
-:root { --fn-pink:#f43372; --fn-section:clamp(54px,7.5vw,118px); }
+:root { --fn-section:clamp(54px,7.5vw,118px); }
 .fn-main { overflow:clip; }
-.fn-main > :is(section,.fn-ticker) + section { border-top:1px solid var(--fn-ink); }
-.fn-main > .fn-section { position:relative; }
-.fn-main > .fn-section:not(.fn-inner-content)::before { content:""; position:absolute; inset-inline:0; top:0; height:5px; background:repeating-linear-gradient(90deg,var(--fn-ink) 0 8px,transparent 8px 16px); opacity:.85; pointer-events:none; }
-.fn-main > .fn-countdown::before { height:9px!important; background:var(--fn-pink)!important; opacity:1!important; }
-.fn-ticker { border-bottom:3px solid var(--fn-ink); }
 .fn-native h1,.fn-display { text-wrap:balance; }
 .fn-native :is(h2,h3) { text-wrap:pretty; }
 .fn-native :is(p,li) { text-wrap:pretty; }
@@ -293,7 +288,7 @@
 .fn-card:focus-visible { outline-offset:6px; }
 .fn-button,.fn-inner-card { transition:background-color .18s ease,transform .18s ease; }
 .fn-button:active { transform:translateY(1px); }
-.fn-inner-banner { padding-block:0; border-bottom:1px solid var(--fn-ink); }
+.fn-inner-banner { padding-block:0; }
 .fn-inner-banner img { height:clamp(180px,30vw,420px); }
 .fn-section-heading,.fn-program-promo,.fn-about { align-items:start; }
 .fn-inner-row { gap:clamp(24px,4vw,64px); }
