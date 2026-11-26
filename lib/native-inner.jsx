@@ -1,7 +1,9 @@
 import React from 'react';
 import pages from './pages.js';
-import { localized, routeFor, langFor, image, optimized, background, Button } from './native-chrome.jsx';
+import { localized, routeFor, langFor, image, originalImage, optimized, background, Button, SiteLink } from './native-chrome.jsx';
 import Gallery from './native-gallery.jsx';
+import { imageKey } from './appearance.js';
+import { contentEdit, contentValue, contentHref, copy, copyLink } from './content-copy.js';
 import FestivalMap from './native-map.jsx';
 import { EventRegistration, VolunteerRegistration } from './native-forms.jsx';
 
@@ -18,21 +20,20 @@ export function pageName(route) {
   return localized(langFor(route),da,en);
 }
 const editFor = (document,route,key) => key ? document[route]?.[key] ?? {} : {};
-const asset = (document,route,module) =>{
-  const changed=image(document,module.src);
-  return changed!==module.src ? changed : editFor(document,route,module.key).value??module.src;
-};
+const asset = (document,route,module) => document.images?.[imageKey(module.src)] ??
+  editFor(document,route,module.key).value ?? originalImage(module.src);
 const linkAsset=(document,href)=>href?.startsWith('/festival-assets/wp-content/uploads/')?image(document,href):href;
-function rich(nodes,document,route) {
+function rich(nodes,document,route,prefix) {
   return nodes.map((node,index)=>{
-    if(typeof node==='string')return node;
-    const edit=editFor(document,route,node.key);
-    const children=edit.value!==undefined?edit.value:rich(node.children??[],document,route);
+    const key=prefix+'.'+index;
+    if(typeof node==='string')return contentValue(document,route,key,node);
+    const edit=contentEdit(document,route,key,node.key);
+    const children=edit.value!==undefined?contentValue(document,route,key,'',node.key):rich(node.children??[],document,route,key);
     if(node.tag==='br'||node.tag==='hr')return React.createElement(node.tag,{key:index});
     if(node.tag==='a'){
-      const href=linkAsset(document,edit.href??node.href);
+      const href=linkAsset(document,contentHref(document,route,key,node.href,node.key));
       if(!href)return <span key={index}>{children}</span>;
-      return <a key={index} href={href} {...(node.external?{target:'_blank',rel:'noreferrer'}:{})}>{children}</a>;
+      return <SiteLink key={index} href={href} {...(node.external?{target:'_blank',rel:'noreferrer'}:{})}>{children}</SiteLink>;
     }
     return React.createElement(node.tag,{key:index},children);
   });
@@ -46,13 +47,13 @@ function Photo({src,alt='',banner=false}) {
   return <img src={optimized(src,banner?1440:640)} srcSet={widths.map(w=>optimized(src,w)+' '+w+'w').join(', ')} sizes={sizes}
     alt={alt} data-original={src} decoding="async" loading={banner?'eager':'lazy'} fetchPriority={banner?'high':'auto'}/>;
 }
-function Module({module,route,document}) {
+function Module({module,route,document,prefix}) {
   const lang=langFor(route);
   switch(module.type){
     case 'text':
     case 'breadcrumb': {
-      const text=rich(module.children,document,route);
-      return module.href?<a className="fn-inner-card" href={module.href}>{text}</a>:<div className={module.type==='breadcrumb'?'fn-breadcrumb':'fn-rich'}>{text}</div>;
+      const text=rich(module.children,document,route,prefix);
+      return module.href?<SiteLink className="fn-inner-card" href={contentHref(document,route,prefix+".link",module.href)}>{text}</SiteLink>:<div className={module.type==='breadcrumb'?'fn-breadcrumb':'fn-rich'}>{text}</div>;
     }
     case 'image':{
       const src=asset(document,route,module);
@@ -60,41 +61,40 @@ function Module({module,route,document}) {
       return <div className="fn-press-image">{module.href?<a href={linkAsset(document,module.href)}>{photo}</a>:photo}</div>;
     }
     case 'button': {
-      const edit=editFor(document,route,module.key);
-      return <Button href={linkAsset(document,edit.href??module.href)}>{edit.value??module.title}</Button>;
+      return <Button href={linkAsset(document,contentHref(document,route,prefix+".button",module.href,module.key))}>{contentValue(document,route,prefix+".button",module.title,module.key)}</Button>;
     }
-    case 'location': return <a className="fn-location" href={module.href} target="_blank" rel="noreferrer" aria-label={localized(lang,'Vis på kort','Show on map')}><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></a>;
+    case 'location': return <a className="fn-location" href={contentHref(document,route,prefix+".link",module.href)} target="_blank" rel="noreferrer" aria-label={localized(lang,'Vis på kort','Show on map')}><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></a>;
     case 'gallery': return <Gallery lang={lang} images={module.images.map(item=>{
       const src=asset(document,route,item);
-      return {...item,src,full:src===item.src?image(document,item.full):src};
+      return {...item,src,full:document.images?.[imageKey(item.src)] || editFor(document,route,item.key).value || image(document,item.full)};
     })}/>;
-    case 'map': return <FestivalMap lang={lang} markers={module.markers} lines={module.lines}/>;
+    case 'map': return <FestivalMap lang={lang} markers={module.markers} lines={module.lines} notice={copy(document,route,'archive.notice')}/>;
     case 'registration': return <EventRegistration lang={lang}/>;
     case 'volunteer': return <VolunteerRegistration lang={lang} route={route}/>;
     default:return null;
   }
 }
 function VolunteerLanding({lang,document}) {
+  const route=routeFor(lang,'bliv-frivillig');
+  const text=key=>copy(document,route,key),link=key=>copyLink(document,route,key);
   return <section className="fn-section" style={background(document,'/bliv-frivillig/content','var(--fn-teal)')}>
     <div className="fn-wrap">
-      <h1 className="fn-inner-title">{localized(lang,'Bliv frivillig','Volunteer')}</h1>
-      <p className="fn-lead">{localized(lang,'Vær med til at skabe 48TIMER Festival. Find det team, du gerne vil være en del af.','Help create 48TIMER Festival. Find the team you would like to be part of.')}</p>
+      <h1 className="fn-inner-title">{text('page.title')}</h1>
+      <p className="fn-lead">{text('page.intro')}</p>
       <div className="fn-inner-link-grid">
-        {[
-          ['fotograf-team','Fotograf-team','Photo team'],
-          ['pr-kommunikation','PR & kommunikation','PR & communication'],
-          ['teknikservice','Teknikservice','Technical team'],
-        ].map(([path,da,en])=><Button key={path} href={routeFor(lang,'bliv-frivillig/'+path)}>{localized(lang,da,en)}</Button>)}
+        {['team.photo','team.pr','team.technical'].map(key=><Button key={key} href={link(key).href}>{link(key).text}</Button>)}
       </div>
-      <p><a className="fn-text-link" href="mailto:kontakt@48timerfestival.dk">{localized(lang,'Kontakt os om andre frivillige opgaver','Contact us about other volunteer roles')}</a></p>
+      <p><SiteLink className="fn-text-link" href={link("team.other").href}>{link("team.other").text}</SiteLink></p>
     </div>
   </section>;
 }
 function PartnerLanding({lang,document}) {
+  const route=routeFor(lang,'bliv-partner');
+  const text=key=>copy(document,route,key),link=key=>copyLink(document,route,key);
   return <section className="fn-section fn-inner-content" style={background(document,'/bliv-partner/content','var(--fn-coral)')}><div className="fn-wrap">
-    <h1 className="fn-inner-title">{localized(lang,'Bliv partner','Become a partner')}</h1>
-    <p className="fn-lead">{localized(lang,'Vil du samarbejde med 48TIMER Festival? Kontakt festivalen for at høre mere om mulighederne.','Interested in working with 48TIMER Festival? Contact us to discuss partnership opportunities.')}</p>
-    <div className="fn-actions"><Button href="mailto:kontakt@48timerfestival.dk">{localized(lang,'Kontakt festivalen','Contact the festival')}</Button><Button secondary href={routeFor(lang,'kontakt-og-information')}>{localized(lang,'Kontakt & info','Contact & info')}</Button></div>
+    <h1 className="fn-inner-title">{text('page.title')}</h1>
+    <p className="fn-lead">{text('page.intro')}</p>
+    <div className="fn-actions"><Button href={link('page.contact').href}>{link('page.contact').text}</Button><Button secondary href={link('page.info').href}>{link('page.info').text}</Button></div>
   </div></section>;
 }
 export default function InnerPage({route,document,Countdown}) {
@@ -116,11 +116,11 @@ export default function InnerPage({route,document,Countdown}) {
       </React.Fragment>;
       return <section className="fn-section fn-inner-content" key={section.id} style={background(document,section.id,section.color)}>
         <div className="fn-wrap">
-          {missingTitle&&index===firstContent&&<h1 className="fn-inner-title">{pageName(route)}</h1>}
-          {section.rows.map((row,i)=><div className={'fn-inner-row fn-cols-'+row.length} key={i}>{row.map((column,j)=><div className="fn-inner-column" key={j}>{column.map((module,k)=><Module key={k} module={module} route={route} document={document}/>)}</div>)}</div>)}
+          {missingTitle&&index===firstContent&&<h1 className="fn-inner-title">{copy(document,route,'page.title')||pageName(route)}</h1>}
+          {section.rows.map((row,i)=><div className={'fn-inner-row fn-cols-'+row.length} key={i}>{row.map((column,j)=><div className="fn-inner-column" key={j}>{column.map((module,k)=><Module key={k} prefix={"body."+[index,i,j,k].join(".")} module={module} route={route} document={document}/>)}</div>)}</div>)}
         </div>
       </section>;
     })}
-    {canonical==='/om-festivalen/'&&<section className="fn-section fn-inner-content" style={{background:'var(--fn-teal)'}}><div className="fn-wrap fn-inner-link-grid"><Button href={routeFor(lang,'bliv-en-del-af-festivalen')}>{localized(lang,'Bliv en del af festivalen','Be part of the festival')}</Button><Button href={routeFor(lang,'bliv-partner')}>{localized(lang,'Bliv partner','Become a partner')}</Button></div></section>}
+    {canonical==='/om-festivalen/'&&<section className="fn-section fn-inner-content" style={{background:'var(--fn-teal)'}}><div className="fn-wrap fn-inner-link-grid"><Button href={copyLink(document,route,'page.part').href}>{copy(document,route,'page.part')}</Button><Button href={copyLink(document,route,'page.partner').href}>{copy(document,route,'page.partner')}</Button></div></section>}
   </>;
 }

@@ -1,4 +1,7 @@
 import { fontRoles, googleFonts, sectionColors, validTypography } from '../../../lib/design.js';
+import archivedMedia from '../../../content/archived-media.json';
+import { contentRoutes, getContentCatalog, validContent } from '../../../lib/content-copy.js';
+import { validFestivalDates, festivalDates, defaultDates } from '../../../lib/festival-dates.js';
 import { completeEvent, validEvents } from '../../../lib/program.js';
 import { getSectionsByPage, validSectionColors } from '../../../lib/sections.js';
 import { revalidateTag } from 'next/cache';
@@ -10,7 +13,7 @@ import pages from '../../../lib/pages.js';
 import { canWrite, hasBlobStore, readState, saveState } from '../../../lib/editor.js';
 
 import { palette } from '../../../lib/appearance.js';
-const pageImages = Object.fromEntries(Object.entries(pages).map(([route,page])=>[route,page.images]));
+const pageImages = Object.fromEntries(Object.entries(pages).map(([route,page])=>[route,Object.fromEntries(Object.entries(page.images).map(([key,image])=>[key,{...image,value:archivedMedia[key]??image.value}]))]));
 const imageKeys = new Set(Object.values(pageImages).flatMap(Object.keys));
 function validAppearance(key,edits) {
   return Object.entries(edits).every(([id,value])=>typeof value==='string' && (key==='colors'?Object.hasOwn(palette,id)&&/^#[\da-f]{6}$/i.test(value):imageKeys.has(id)&&/^\/media\/[0-9a-f-]{36}\.webp$/.test(value)));
@@ -23,7 +26,7 @@ export async function GET() {
   return json({
     ...state, writable: canWrite(), images: pageImages,
     sections: getSectionsByPage(), sectionColors, fontRoles, googleFonts: Object.keys(googleFonts),
-    pages: Object.keys(pages),
+    pages: Object.keys(pages), contentCatalog: Object.fromEntries(contentRoutes.map(route=>[route,getContentCatalog(route)])), defaultDates,
   });
 }
 
@@ -36,7 +39,9 @@ function validate(draft) {
   return Object.entries(draft).every(([route, edits]) => {
     if (!edits || typeof edits !== 'object' || Array.isArray(edits)) return false;
     if (route === 'sectionBackgrounds') return validSectionColors(edits);
-    if (route === 'programEvents') return validEvents(edits);
+    if (route === 'programEvents') return validEvents(edits, festivalDates(draft));
+    if (route === 'content') return validContent(edits);
+    if (route === 'festivalDates') return validFestivalDates(edits);
     if (route === 'typography') return validTypography(draft.fonts ?? {}, edits);
     if (route === 'fonts') return Object.entries(edits).every(([role, family]) =>
       Object.hasOwn(fontRoles, role) && typeof family === 'string' && Object.hasOwn(googleFonts, family)
@@ -89,6 +94,7 @@ export async function POST(request) {
     state.draft = state.published;
   } else {
     if (!validate(input.draft)) return json({ error: 'Invalid edit. Use an absolute URL or a site-relative path for links and images.' }, 400);
+    if (input.action === 'publish' && !validEvents(input.draft.programEvents ?? {},festivalDates(input.draft),true)) return json({error:'All events must fall within the festival dates before publishing.'},400);
     if (input.action === 'publish' && Object.values(input.draft.programEvents ?? {}).some(event => !completeEvent(event))) {
       return json({ error: 'Complete the Danish and English titles, venue and start time for every event before publishing.' }, 400);
     }

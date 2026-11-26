@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { blankEvent, categories, completeEvent, festivalDays } from '../../lib/program.js';
+import { blankEvent, categories, completeEvent } from '../../lib/program.js';
+import { defaultDates, festivalDates, festivalDaysFor, formatDates, validFestivalDates } from '../../lib/festival-dates.js';
+import { importProgramme, template } from '../../lib/program-import.js';
 import { googleFonts, resolveTypography, typographyLimits } from '../../lib/design.js';
 
 const weightNames = { 100: 'Thin', 200: 'Extra light', 300: 'Light', 400: 'Regular', 500: 'Medium', 600: 'Semibold', 700: 'Bold', 800: 'Extra bold', 900: 'Black' };
@@ -25,8 +27,43 @@ export default function Editor() {
   const [status, setStatus] = useState('Loading editor…');
   const [pending, setPending] = useState(false);
   const [filter, setFilter] = useState('');
-  const [tab, setTab] = useState('sections');
+  const [tab, setTab] = useState('content');
   const [openEvent, setOpenEvent] = useState(null);
+  const [contentPath, setContentPath] = useState('/en/');
+  const [programInput, setProgramInput] = useState('');
+  const [importPreview, setImportPreview] = useState(null);
+  const dates = festivalDates(draft);
+  const enteredDates = draft.festivalDates ?? defaultDates;
+  const days = festivalDaysFor(dates);
+  const datesValid = validFestivalDates(enteredDates);
+
+  function updateCopy(route,key,property,value) {
+    setDraft(previous=>({ ...previous,content:{...previous.content,[route]:{
+      ...previous.content?.[route],[key]:{...previous.content?.[route]?.[key],[property]:value}
+    }}}));
+  }
+  function resetCopy(route,key) {
+    setDraft(previous=>{
+      const fields={...previous.content?.[route]};delete fields[key];
+      return {...previous,content:{...previous.content,[route]:fields}};
+    });
+  }
+  function updateDate(key,value) {
+    setDraft(previous=>({...previous,festivalDates:{...defaultDates,...previous.festivalDates,[key]:value}}));
+    setImportPreview(null);
+  }
+  function reviewImport() {
+    setImportPreview(importProgramme(programInput,dates,draft.programEvents));
+  }
+  function applyImport() {
+    const result=importProgramme(programInput,dates,draft.programEvents);
+    setImportPreview(result);
+    if(result.errors.length||!result.events.length)return;
+    const additions=Object.fromEntries(result.events.map(event=>[crypto.randomUUID(),event]));
+    setDraft(previous=>({...previous,programEvents:{...previous.programEvents,...additions}}));
+    setStatus(result.events.length+' events added to the draft. Publish when ready.');
+    setProgramInput('');setImportPreview(null);
+  }
 
   useEffect(() => {
     async function load() {
@@ -74,7 +111,7 @@ export default function Editor() {
 
   function addEvent() {
     const id = crypto.randomUUID();
-    updateAppearance('programEvents', id, blankEvent());
+    updateAppearance('programEvents', id, blankEvent(dates));
     setOpenEvent(id);
   }
 
@@ -130,7 +167,11 @@ export default function Editor() {
     const priority = (name) => name.startsWith('Main poster') ? 0 : 1;
     return priority(first.label) - priority(second.label) || first.label.localeCompare(second.label);
   });
-  const disabled = !state?.writable || pending;
+  const disabled = !state?.writable || pending || !datesValid;
+  const copyFields=(state?.contentCatalog?.[contentPath]??[]).map(field=>{
+    const edit={...(field.legacyKey?draft[contentPath]?.[field.legacyKey]:{}),...draft.content?.[contentPath]?.[field.key]};
+    return {...field,edit};
+  }).filter(field=>[field.label,field.edit.value??field.value,field.edit.href??field.href].some(value=>value?.toLowerCase().includes(filter.toLowerCase())));
   return <main className="editor">
     <header className="editor-header">
       <div><p>48 Timer Festival</p><h1>Site editor</h1></div>
@@ -141,17 +182,43 @@ export default function Editor() {
       <fieldset disabled={pending} className="editor-workspace" aria-label="Site settings">
         <section className="editor-fields">
           <nav aria-label="Editor sections" className="editor-tabs">
-            {Object.entries({ sections: 'Section backgrounds', fonts: 'Fonts', images: 'Images', program: 'Program' }).map(([key, title]) =>
-              <button key={key} type="button" aria-pressed={tab === key}
-                onClick={() => { setTab(key); setFilter(''); if (key === 'program') setPath('/en/program/'); }}>{title}</button>
+            {Object.entries({ content: 'Content', sections: 'Design', images: 'Media', program: 'Program' }).map(([key, title]) =>
+              <button key={key} type="button" aria-pressed={tab === key || (key==='sections'&&tab==='fonts')}
+                onClick={() => { setTab(key); setFilter(''); if (key === 'program') setPath('/en/program/'); if(key==='content')setPath(contentPath.startsWith('shared.')?(contentPath==='shared.en'?'/en/':'/'):contentPath); }}>{title}</button>
             )}
           </nav>
-          {!['fonts', 'program'].includes(tab) && <label>Page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); }}>
+          {['sections','fonts'].includes(tab)&&<nav className="editor-tabs editor-subtabs" aria-label="Design settings"><button type="button" aria-pressed={tab==='sections'} onClick={()=>setTab('sections')}>Section backgrounds</button><button type="button" aria-pressed={tab==='fonts'} onClick={()=>setTab('fonts')}>Typography</button></nav>}
+          {!['content','fonts', 'program'].includes(tab) && <label>Page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); }}>
             {['English', 'Dansk'].map((language) => <optgroup key={language} label={language}>
               {state.pages.filter((route) => languageFor(route) === language).map((route) =>
                 <option key={route} value={route}>{labelFor(route)}</option>)}
             </optgroup>)}
           </select></label>}
+          {tab==='content'&&<div className="editor-settings">
+            <fieldset className="editor-font-card"><legend>Festival dates · sitewide</legend>
+              <p className="editor-hint">Updates the date ticker, countdown, festival copy and programme days in both languages. The artwork itself is unchanged.</p>
+              <div className="editor-event-grid">
+              {['start','end'].map(key=><label key={key}>{key==='start'?'Start date':'End date'}<input type="date" value={enteredDates[key]} onChange={e=>updateDate(key,e.target.value)}/></label>)}
+              </div>
+              {!datesValid&&<p role="alert">Choose valid dates within a 14-day festival period.</p>}
+            </fieldset>
+            <label>Page or shared content<select value={contentPath} onChange={e=>{
+              const selected=e.target.value;setContentPath(selected);setPath(selected.startsWith('shared.')?(selected==='shared.en'?'/en/':'/'):selected);setFilter('');
+            }}>
+              <optgroup label="Shared navigation and footer"><option value="shared.en">English · all pages</option><option value="shared.da">Dansk · all pages</option></optgroup>
+              {['English','Dansk'].map(language=><optgroup key={language} label={language}>
+                {state.pages.filter(route=>languageFor(route)===language).map(route=><option key={route} value={route}>{labelFor(route)}</option>)}
+              </optgroup>)}
+            </select></label>
+            <label>Find text or links<input type="search" value={filter} onChange={e=>setFilter(e.target.value)}/></label>
+            <p className="editor-hint">{copyFields.length} editable fields. Changes affect this language only; shared content affects every page in that language.</p>
+            {copyFields.map(field=><details key={contentPath+field.key}>
+              <summary><strong>{field.label}</strong> · {(field.edit.value??field.value??'').slice(0,100)}{(field.edit.value??field.value??'').length>100?'…':''}</summary>
+              {!field.hrefOnly&&<label>Text<textarea maxLength={10000} rows={(field.edit.value??field.value??'').length>100?5:2} value={field.edit.value??field.value??''} onChange={e=>updateCopy(contentPath,field.key,'value',e.target.value)}/></label>}
+              {field.href!==undefined&&<label>Link destination<input type="text" maxLength={10000} value={field.edit.href??field.href} onChange={e=>updateCopy(contentPath,field.key,'href',e.target.value)}/></label>}
+              {draft.content?.[contentPath]?.[field.key]&&<button type="button" onClick={()=>resetCopy(contentPath,field.key)}>Reset to existing text</button>}
+            </details>)}
+          </div>}
           {tab === 'sections' && <div className="editor-settings">
             {(state.sections[path] ?? []).map(({ id, name, shared }) => {
               const color = draft.sectionBackgrounds?.[id] ?? '';
@@ -205,16 +272,34 @@ export default function Editor() {
           </div>}
           {tab === 'program' && <div className="editor-program">
             <div className="editor-program-heading">
-              <div><h2>Festival programme</h2><p>14–16 May 2027 · Danish and English</p></div>
+              <div><h2>Festival programme</h2><p>{formatDates(dates)} · Danish and English</p></div>
               <button type="button" onClick={addEvent}>+ Add event</button>
             </div>
             <p>{Object.keys(draft.programEvents ?? {}).length} events in draft. Publish when the programme is ready.</p>
-            {Object.entries(draft.programEvents ?? {}).map(([id, event]) => <details key={id}
+            <details>
+              <summary>Import approved programme from a spreadsheet</summary>
+              <p className="editor-hint">Copy approved rows from Google Sheets or upload CSV/TSV. Registration data is not connected. Use the column names in the template.</p>
+              <p><a className="editor-text-link" href={'data:text/csv;charset=utf-8,'+encodeURIComponent(template)} download="festival-programme-template.csv">Download CSV template ↓</a></p>
+              <label>Spreadsheet file<input type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" onChange={async e=>{
+                const file=e.target.files?.[0];if(file){if(file.size>2000000){setStatus('Use a spreadsheet under 2 MB.');return;}setProgramInput(await file.text());setImportPreview(null);}e.target.value='';
+              }}/></label>
+              <label>Or paste the table with headers<textarea rows={6} value={programInput} onChange={e=>{setProgramInput(e.target.value);setImportPreview(null);}} placeholder="day, start, category, titleDa, titleEn, venue…"/></label>
+              <button type="button" disabled={!programInput.trim()||!datesValid} onClick={reviewImport}>Review import</button>
+              {importPreview&&<div className="editor-import-result" aria-live="polite">
+                <p>{importPreview.events.length} new events · {importPreview.duplicate.length} duplicates skipped · {importPreview.errors.length} errors</p>
+                {importPreview.errors.length>0&&<ul>{importPreview.errors.map((error,i)=><li key={i}>{error}</li>)}</ul>}
+                <ul>{importPreview.events.slice(0,20).map((event,i)=><li key={i}>{event.day} · {event.start} · {event.titleEn}</li>)}</ul>
+                {importPreview.events.length>20&&<p>And {importPreview.events.length-20} more.</p>}
+                <button type="button" disabled={Boolean(importPreview.errors.length)||!importPreview.events.length} onClick={applyImport}>Add {importPreview.events.length} events to draft</button>
+              </div>}
+            </details>
+            {Object.entries(draft.programEvents ?? {}).sort(([,a],[,b])=>(a.day+a.start).localeCompare(b.day+b.start)).map(([id, event]) => <details key={id}
               open={openEvent === id ? true : undefined}>
               <summary>{event.titleEn || event.titleDa || 'Untitled event'} · {event.day.slice(5)}{event.start && ' · ' + event.start}{!completeEvent(event) && ' · Incomplete'}</summary>
               <div className="editor-event-grid">
                 <label>Day<select value={event.day} onChange={e => updateEvent(id,'day',e.target.value)}>
-                  {festivalDays.map(day => <option key={day} value={day}>{day}</option>)}
+                  {!days.includes(event.day)&&<option value={event.day}>{event.day} · outside festival dates</option>}
+                  {days.map(day => <option key={day} value={day}>{day}</option>)}
                 </select></label>
                 <label>Category<select value={event.category} onChange={e => updateEvent(id,'category',e.target.value)}>
                   {Object.entries(categories).map(([key,category]) => <option key={key} value={key}>{category.en}</option>)}
@@ -254,7 +339,7 @@ export default function Editor() {
         <form action="/api/editor" method="post" target="_blank" rel="noopener">
           <input type="hidden" name="path" value={path} />
           <input type="hidden" name="draft" value={JSON.stringify(draft)} />
-          <button type="submit">Preview draft ↗</button>
+          <button type="submit" disabled={!datesValid}>Preview draft ↗</button>
         </form>
         <button disabled={disabled || !state.previous} onClick={() => submit('restore')}>Restore previous</button>
         <button disabled={disabled} onClick={() => submit('save')}>Save draft</button>

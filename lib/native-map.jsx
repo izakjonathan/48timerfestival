@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import {localized} from './native-chrome.jsx';
 
-export default function FestivalMap({markers,lines,lang}) {
+export default function FestivalMap({markers,lines,lang,notice}) {
   const root=useRef(null);
   const [error,setError]=useState(false);
   useEffect(()=>{
@@ -29,7 +29,7 @@ export default function FestivalMap({markers,lines,lang}) {
     return ()=>{active=false;map?.remove();};
   },[markers,lines,lang]);
   return <>
-    <p>{localized(lang,'Kortet viser arrangementer fra en tidligere festival. Programmet for 2027 offentliggøres senere.','This map shows events from a previous festival. The 2027 programme will be announced later.')}</p>
+    <p>{notice}</p>
     <div className="fn-map" ref={root} aria-label={localized(lang,'Interaktivt festivalkort','Interactive festival map')}/>
     {error&&<p role="status">{localized(lang,'Kortet kunne ikke indlæses. Se listen nedenfor.','The map could not load. See the list below.')}</p>}
     <details className="fn-map-list"><summary>{localized(lang,'Vis tidligere arrangementer','View archived events')} ({markers.length})</summary>

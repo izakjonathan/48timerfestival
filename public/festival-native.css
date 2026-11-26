@@ -242,3 +242,30 @@
 .fn-gallery-dialog p { overflow-wrap:anywhere; }
 
 .fn-gallery-view button svg { width:22px; height:22px; }
+
+/* Responsive refinements shared across the native pages. */
+.fn-ticker[data-offscreen] .fn-ticker-track { animation-play-state:paused; }
+.fn-native :is(p,li) { overflow-wrap:break-word; }
+.fn-inner-content .fn-rich > :is(p,ul,ol,blockquote) { max-width:68ch; }
+.fn-actions .fn-button { min-height:48px; }
+.fn-inner-column .fn-button { max-width:100%; }
+.fn-native .fn-rich a { overflow-wrap:anywhere; }
+.fn-header-bar { padding-inline:max(var(--fn-gutter),env(safe-area-inset-left)); }
+.fn-footer { padding-bottom:env(safe-area-inset-bottom); }
+.fn-footer-grid { align-items:start; }
+.fn-logo img { aspect-ratio:1; }
+.fn-event-venue { overflow-wrap:anywhere; }
+@media(max-width:700px) {
+  .fn-hero-grid { gap:24px; }
+  .fn-hero-copy { padding-block:8px 20px; }
+  .fn-hero h1 { font-size:clamp(2.8rem,12.5vw,5rem); }
+  .fn-hero-copy .fn-actions { display:grid; grid-template-columns:1fr; align-items:stretch; }
+  .fn-hero-copy .fn-button { width:100%; }
+  .fn-inner-banner img { height:clamp(170px,52vw,300px); }
+  .fn-inner-content { padding-block:clamp(28px,7vw,54px); }
+  .fn-inner-row + .fn-inner-row { margin-top:32px; }
+  .fn-inner-column { gap:18px; }
+  .fn-program-banner h1 { font-size:clamp(3rem,12vw,5.5rem); white-space:normal; }
+  .fn-footer-grid { gap:32px; }
+  .fn-gallery-view { padding:20px 12px; }
+}

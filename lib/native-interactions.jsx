@@ -1,4 +1,11 @@
-(() => {
+'use client';
+import {useEffect} from 'react';
+export default function PublicInteractions({route}) {
+  useEffect(()=>{
+  const controller=new AbortController();
+  const signal=controller.signal;
+  let observer,tickerObserver,timer;
+
   const header = document.querySelector('[data-fn-header]');
   const toggle = header?.querySelector('.fn-menu-toggle');
   const menu = header?.querySelector('.fn-mobile-nav');
@@ -21,7 +28,7 @@
     if (immediate || reduced.matches || menu.hidden) finish();
     else { menu.dataset.closing = ''; closeTimer = setTimeout(finish,230); }
   }
-  toggle?.addEventListener('click', () => setMenu(toggle.getAttribute('aria-expanded') !== 'true'));
+  toggle?.addEventListener('click', () => setMenu(toggle.getAttribute('aria-expanded') !== 'true'), {signal});
   document.addEventListener('keydown', event => {
     if (toggle?.getAttribute('aria-expanded') !== 'true') return;
     if (event.key === 'Escape') { setMenu(false); toggle.focus(); }
@@ -30,9 +37,9 @@
       if (event.shiftKey && document.activeElement === targets[0]) { event.preventDefault(); targets.at(-1).focus(); }
       if (!event.shiftKey && document.activeElement === targets.at(-1)) { event.preventDefault(); targets[0].focus(); }
     }
-  });
-  matchMedia('(min-width: 1051px)').addEventListener('change', event => { if (event.matches) setMenu(false,true); });
-  addEventListener('pageshow', event => { if (event.persisted) setMenu(false,true); });
+  },{signal});
+  matchMedia('(min-width: 1051px)').addEventListener('change', event => { if (event.matches) setMenu(false,true); },{signal});
+  addEventListener('pageshow', event => { if (event.persisted) setMenu(false,true); },{signal});
 
   function fallback(image) {
     if (!(image instanceof HTMLImageElement) || !image.dataset.original || image.dataset.failed) return;
@@ -41,7 +48,7 @@
     image.removeAttribute('srcset');
     image.src = matchMedia('(max-width:700px)').matches && image.dataset.mobileOriginal ? image.dataset.mobileOriginal : image.dataset.original;
   }
-  document.addEventListener('error', event => fallback(event.target), true);
+  document.addEventListener('error', event => fallback(event.target), {capture:true,signal});
   document.querySelectorAll('img[data-original]').forEach(image => { if (image.complete && !image.naturalWidth) fallback(image); });
 
   const clock = document.querySelector('[data-fn-countdown]');
@@ -52,7 +59,8 @@
       const values = { days: Math.floor(seconds / 86400), hours: Math.floor(seconds / 3600) % 24, minutes: Math.floor(seconds / 60) % 60, seconds: seconds % 60 };
       for (const [key,value] of Object.entries(values)) clock.querySelector('[data-unit="'+key+'"]').textContent = String(value).padStart(2,'0');
     };
-    draw(); setInterval(draw, 1000);
+    draw(); timer=setInterval(()=>{if(!document.hidden)draw();}, 1000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)draw();},{signal});
   }
   const form = document.querySelector('[data-fn-filters]');
   if (form) {
@@ -70,16 +78,30 @@
       }
       status.textContent = count + ' ' + status.dataset.label; empty.hidden = count !== 0;
     };
-    form.addEventListener('input', filter);
-    form.addEventListener('change', filter);
-    form.addEventListener('reset', () => requestAnimationFrame(filter));
-    form.addEventListener('submit', event => { event.preventDefault(); filter(); });
+    form.addEventListener('input', filter,{signal});
+    form.addEventListener('change', filter,{signal});
+    form.addEventListener('reset', () => requestAnimationFrame(filter),{signal});
+    form.addEventListener('submit', event => { event.preventDefault(); filter(); },{signal});
   }
   if (!reduced.matches && 'IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+    observer = new IntersectionObserver(entries => entries.forEach(entry => {
       if (entry.isIntersecting) { entry.target.classList.add('fn-reveal'); observer.unobserve(entry.target); }
     }), { threshold: .12 });
     document.documentElement.classList.add('fn-reveal-ready');
     document.querySelectorAll('[data-fn-reveal]').forEach(element => observer.observe(element));
+    const ticker=document.querySelector('.fn-ticker');
+    if(ticker){
+      tickerObserver=new IntersectionObserver(entries=>entries.forEach(entry=>entry.target.toggleAttribute('data-offscreen',!entry.isIntersecting)));
+      tickerObserver.observe(ticker);
+    }
   }
-})();
+  return ()=>{
+    controller.abort();
+    clearTimeout(closeTimer);clearInterval(timer);
+    observer?.disconnect();tickerObserver?.disconnect();
+    if(menu&&toggle)setMenu(false,true);
+    document.body.style.overflow='';
+  };
+  },[route]);
+  return null;
+}

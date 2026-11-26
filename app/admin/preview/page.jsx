@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Script from 'next/script';
 import { NativeContent } from '../../../lib/native-site.jsx';
 
 export default function PreviewPage() {
@@ -17,5 +16,5 @@ export default function PreviewPage() {
     catch { setPreview(null); }
   }, []);
   if (!preview) return <p>Open a draft preview from the editor.</p>;
-  return <><link rel="stylesheet" href="/festival-native.css"/><NativeContent route={preview.route} document={preview.document}/><Script src="/festival-native.js" strategy="afterInteractive"/></>;
+  return <><link rel="stylesheet" href="/festival-native.css"/><NativeContent route={preview.route} document={preview.document}/></>;
 }
