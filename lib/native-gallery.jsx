@@ -21,10 +21,10 @@ export default function Gallery({images,lang}) {
       onKeyDown={event=>{if(event.key==='ArrowRight')step(1);if(event.key==='ArrowLeft')step(-1);}}
       onClick={event=>{if(event.target===dialog.current)close();}}>
       {active!==null&&<div className="fn-gallery-view">
-        <button className="fn-gallery-close" onClick={close} aria-label={localized(lang,'Luk','Close')}>×</button>
-        <button className="fn-gallery-prev" onClick={()=>step(-1)} aria-label={localized(lang,'Forrige billede','Previous photo')}>‹</button>
-        <img src={images[active].full} alt={images[active].alt||localized(lang,'Festivalfoto','Festival photo')}/>
-        <button className="fn-gallery-next" onClick={()=>step(1)} aria-label={localized(lang,'Næste billede','Next photo')}>›</button>
+        <button className="fn-gallery-close" onClick={close} aria-label={localized(lang,'Luk','Close')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+        <button className="fn-gallery-prev" onClick={()=>step(-1)} aria-label={localized(lang,'Forrige billede','Previous photo')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
+        <img key={active} src={optimized(images[active].full,1920,85)} data-original={images[active].full} alt={images[active].alt||localized(lang,'Festivalfoto','Festival photo')}/>
+        <button className="fn-gallery-next" onClick={()=>step(1)} aria-label={localized(lang,'Næste billede','Next photo')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
         <p>{active+1} / {images.length}{images[active].alt && ' · '+images[active].alt}</p>
       </div>}
     </dialog>

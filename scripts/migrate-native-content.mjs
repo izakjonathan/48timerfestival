@@ -16,11 +16,15 @@ const localLink = value => {
   if (/^(?:https?:\/\/|mailto:|tel:|#|\/(?![\/\\]))/i.test(href)) return href;
   return '';
 };
-function rich(nodes) {
+function rich(nodes, route) {
   return nodes.flatMap(node => {
-    if (node.type === 'text') return node.data ? [node.data] : [];
+    if (node.type === 'text') {
+      let text=node.data;
+      if (route?.includes('/bliv-frivillig/')) text=text.replace(/12\.\s*[-–]\s*14\.\s*maj(?:\s+2022)?/gi,'14.–16. maj 2027');
+      return text ? [text] : [];
+    }
     if (node.type !== 'tag' || ['script','style','iframe','object'].includes(node.name)) return [];
-    const children = rich(node.children ?? []);
+    const children = rich(node.children ?? [], route);
     if (!allowed.has(node.name)) return children;
     const result = { tag:node.name, children };
     if (node.attribs['data-edit-key']) result.key = node.attribs['data-edit-key'];
@@ -112,7 +116,7 @@ for (const [route,page] of Object.entries(snapshots)) {
           const href = cls.map(name=>moduleLinks[name]).find(Boolean);
           if (cls.includes('et_pb_text')) {
             const container = module.find('.et_pb_text_inner').first();
-            const children = rich(container.contents().toArray());
+            const children = rich(container.contents().toArray(),route);
             const plain = container.text().trim();
             if (plain) modules.push({type:cls.includes('et_pb_text_0') && cls.includes('breadcrumb')?'breadcrumb':'text',children,...(href?{href}:{})});
           } else if (cls.includes('et_pb_gallery')) {
