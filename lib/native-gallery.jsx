@@ -1,5 +1,6 @@
 'use client';
 import React,{useState,useEffect,useRef} from 'react';
+import {focusStyle} from './editorial.js';
 import {localized,optimized} from './native-chrome.jsx';
 
 export default function Gallery({images,lang}) {
@@ -15,9 +16,9 @@ export default function Gallery({images,lang}) {
     <div className="fn-gallery">{images.map((item,index)=><button type="button" className="fn-gallery-picture" key={index}
       aria-label={localized(lang,'Åbn billede ','Open photo ')+(index+1)}
       onClick={event=>{trigger.current=event.currentTarget;setActive(index);}}>
-      <img src={optimized(item.src,640)} data-original={item.src} alt={item.alt||localized(lang,'Festivalfoto','Festival photo')} loading="lazy" decoding="async"/>
+      <img src={optimized(item.src,384)} srcSet={[384,640,828].map(w=>optimized(item.src,w)+' '+w+'w').join(', ')} sizes="(max-width: 700px) 45vw, 32vw" data-original={item.src} style={focusStyle(item.focus)} alt={item.alt||localized(lang,'Festivalfoto','Festival photo')} loading="lazy" decoding="async"/>
     </button>)}</div>
-    <dialog className="fn-gallery-dialog" ref={dialog} onCancel={event=>{event.preventDefault();close();}}
+    <dialog className="fn-gallery-dialog" aria-label={localized(lang,"Festivalbilleder","Festival photos")} ref={dialog} onCancel={event=>{event.preventDefault();close();}}
       onKeyDown={event=>{if(event.key==='ArrowRight')step(1);if(event.key==='ArrowLeft')step(-1);}}
       onClick={event=>{if(event.target===dialog.current)close();}}>
       {active!==null&&<div className="fn-gallery-view">

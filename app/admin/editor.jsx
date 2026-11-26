@@ -1,5 +1,7 @@
 'use client';
 
+import { mediaLibrary } from '../../lib/editorial.js';
+import { BlockEditor, MediaSelect, FocalPoint, SEOEditor, HistoryEditor, AnalyticsEditor } from './editor-extras.jsx';
 import { useEffect, useState } from 'react';
 import { blankEvent, categories, completeEvent } from '../../lib/program.js';
 import { defaultDates, festivalDates, festivalDaysFor, formatDates, validFestivalDates } from '../../lib/festival-dates.js';
@@ -122,13 +124,13 @@ export default function Editor() {
     }));
   }
 
-  async function submit(action) {
+  async function submit(action,historyId) {
     setPending(true);
     setStatus('');
     try {
       const response = await fetch('/api/editor', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, revision: state.revision, draft }),
+        body: JSON.stringify({ action, revision: state.revision, draft, historyId }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
@@ -152,7 +154,7 @@ export default function Editor() {
       const response = await fetch('/api/editor', { method: 'POST', body });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
-      updateAppearance('images', key, data.url);
+      setDraft(previous=>({...previous,mediaLibrary:{...previous.mediaLibrary,[data.url]:file.name.slice(0,200)},mediaDimensions:{...previous.mediaDimensions,[data.url]:{width:data.width,height:data.height}},...(key?{images:{...previous.images,[key]:data.url}}:{})}));
       setStatus('Image uploaded. Publish to apply it to the live page.');
     } catch (error) {
       setStatus(error.message);
@@ -161,6 +163,7 @@ export default function Editor() {
     }
   }
 
+  const library=mediaLibrary(state?.images,draft);
   const images = Object.entries(state?.images[path] ?? {}).filter(([, image]) =>
     image.label.toLowerCase().includes(filter.toLowerCase())
   ).sort(([, first], [, second]) => {
@@ -182,18 +185,22 @@ export default function Editor() {
       <fieldset disabled={pending} className="editor-workspace" aria-label="Site settings">
         <section className="editor-fields">
           <nav aria-label="Editor sections" className="editor-tabs">
-            {Object.entries({ content: 'Content', sections: 'Design', images: 'Media', program: 'Program' }).map(([key, title]) =>
+            {Object.entries({ content: 'Content', blocks: 'Blocks', sections: 'Design', images: 'Media', program: 'Program', seo:'SEO', history:'History', analytics:'Analytics' }).map(([key, title]) =>
               <button key={key} type="button" aria-pressed={tab === key || (key==='sections'&&tab==='fonts')}
                 onClick={() => { setTab(key); setFilter(''); if (key === 'program') setPath('/en/program/'); if(key==='content')setPath(contentPath.startsWith('shared.')?(contentPath==='shared.en'?'/en/':'/'):contentPath); }}>{title}</button>
             )}
           </nav>
           {['sections','fonts'].includes(tab)&&<nav className="editor-tabs editor-subtabs" aria-label="Design settings"><button type="button" aria-pressed={tab==='sections'} onClick={()=>setTab('sections')}>Section backgrounds</button><button type="button" aria-pressed={tab==='fonts'} onClick={()=>setTab('fonts')}>Typography</button></nav>}
-          {!['content','fonts', 'program'].includes(tab) && <label>Page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); }}>
+          {!['content','fonts', 'program','history','analytics'].includes(tab) && <label>Page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); }}>
             {['English', 'Dansk'].map((language) => <optgroup key={language} label={language}>
               {state.pages.filter((route) => languageFor(route) === language).map((route) =>
                 <option key={route} value={route}>{labelFor(route)}</option>)}
             </optgroup>)}
           </select></label>}
+          {tab==='blocks'&&<BlockEditor route={path} blocks={draft.blocks?.[path]} update={blocks=>updateAppearance('blocks',path,blocks)} colors={state.sectionColors} library={library}/>}
+          {tab==='seo'&&<SEOEditor route={path} seo={draft.seo?.[path]} defaults={state.seoDefaults?.[path]} library={library} onChange={value=>updateAppearance('seo',path,value)}/>}
+          {tab==='history'&&<HistoryEditor history={state.history??[]} publishedAt={state.publishedAt} publishedRevision={state.publishedRevision} disabled={disabled} restore={id=>submit('restore',id)}/>}
+          {tab==='analytics'&&<AnalyticsEditor/>}
           {tab==='content'&&<div className="editor-settings">
             <fieldset className="editor-font-card"><legend>Festival dates · sitewide</legend>
               <p className="editor-hint">Updates the date ticker, countdown, festival copy and programme days in both languages. The artwork itself is unchanged.</p>
@@ -319,16 +326,23 @@ export default function Editor() {
             <label>Preview programme<select value={path === '/program/' ? '/program/' : '/en/program/'} onChange={e=>setPath(e.target.value)}><option value="/en/program/">English</option><option value="/program/">Dansk</option></select></label>
           </div>}
           {tab === 'images' && <>
+          <details><summary>Reusable media library · {Object.keys(library).length} images</summary>
+          <p className="editor-hint">Upload once, reuse in any existing image slot, new content block or social sharing card. Uploads are added to the draft library.</p>
+          <label>Upload new image<input type="file" accept="image/*" disabled={disabled} onChange={e=>{const file=e.target.files[0];e.target.value='';upload(null,file);}}/></label>
+          <div className="editor-library">{Object.entries(library).map(([url,name])=><figure key={url}><img src={url} alt="" loading="lazy"/><figcaption>{name}</figcaption></figure>)}</div>
+          </details>
           <label>Find an image<input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} /></label>
           {images.map(([key, image]) => <details key={path + key}>
             <summary>{image.label}</summary>
             <img className="editor-image" src={draft.images?.[key] ?? image.value} alt="" loading="lazy" />
+            <MediaSelect library={library} value={draft.images?.[key]??image.value} onChange={value=>updateAppearance('images',key,value)}/>
             <label>Replace image<input type="file" accept="image/*" disabled={disabled}
               onChange={(event) => {
                 const file = event.target.files[0];
                 event.target.value = '';
                 upload(key, file);
               }} /></label>
+            <p className="editor-hint">Focal point applies to cropped images; logos and the full poster remain uncropped.</p><FocalPoint src={draft.images?.[key]??image.value} value={draft.imageFocus?.[key]} onChange={value=>updateAppearance('imageFocus',key,value)}/>
             {draft.images?.[key] && <button type="button"
               onClick={() => updateAppearance('images', key)}>Restore original image</button>}
           </details>)}
@@ -341,7 +355,7 @@ export default function Editor() {
           <input type="hidden" name="draft" value={JSON.stringify(draft)} />
           <button type="submit" disabled={!datesValid}>Preview draft ↗</button>
         </form>
-        <button disabled={disabled || !state.previous} onClick={() => submit('restore')}>Restore previous</button>
+        <button disabled={disabled || !state.previous} onClick={() => {if(confirm('Restore the previous publication and replace the draft?'))submit('restore')}}>Restore previous</button>
         <button disabled={disabled} onClick={() => submit('save')}>Save draft</button>
         <button className="primary" disabled={disabled} onClick={() => submit('publish')}>Publish</button>
       </footer>

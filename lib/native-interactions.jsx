@@ -1,10 +1,17 @@
 'use client';
 import {useEffect} from 'react';
-export default function PublicInteractions({route}) {
+export default function PublicInteractions({route,preview=false}) {
   useEffect(()=>{
   const controller=new AbortController();
   const signal=controller.signal;
-  let observer,tickerObserver,timer;
+  let observer,tickerObserver,timer,analyticsTimer;
+  if(!preview&&navigator.doNotTrack!=='1'&&window.doNotTrack!=='1'&&!navigator.globalPrivacyControl){
+    analyticsTimer=setTimeout(()=>{if(!document.hidden)fetch('/api/analytics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:route}),keepalive:true}).catch(()=>{});},1500);
+  }
+  if(preview){
+    document.addEventListener('submit',event=>{if(!event.target.matches('[data-fn-filters]'))event.preventDefault();},{signal,capture:true});
+    document.addEventListener('click',event=>{const link=event.target.closest?.('a[href]');if(link&&!link.getAttribute('href').startsWith('#'))event.preventDefault();},{signal,capture:true});
+  }
 
   const header = document.querySelector('[data-fn-header]');
   const toggle = header?.querySelector('.fn-menu-toggle');
@@ -97,11 +104,11 @@ export default function PublicInteractions({route}) {
   }
   return ()=>{
     controller.abort();
-    clearTimeout(closeTimer);clearInterval(timer);
+    clearTimeout(closeTimer);clearTimeout(analyticsTimer);clearInterval(timer);
     observer?.disconnect();tickerObserver?.disconnect();
     if(menu&&toggle)setMenu(false,true);
     document.body.style.overflow='';
   };
-  },[route]);
+  },[route,preview]);
   return null;
 }

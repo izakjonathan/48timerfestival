@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import {localized} from './native-chrome.jsx';
+const archivedHref=href=>/^\/kea-x-(?:blaagaardsplads|dr-louises-bro)\/$/.test(href)?'https://www.48timerfestival.dk'+href:href;
 
 export default function FestivalMap({markers,lines,lang,notice}) {
   const root=useRef(null);
@@ -21,7 +22,7 @@ export default function FestivalMap({markers,lines,lang,notice}) {
         const popup=document.createElement('div');
         const title=document.createElement('strong');title.textContent=item.title;popup.append(title);
         for(const text of item.details){const p=document.createElement('p');p.textContent=text;popup.append(p);}
-        if(item.href){const link=document.createElement('a');link.href=item.href;link.textContent=localized(lang,'Mere info','More info');link.target='_blank';link.rel='noopener noreferrer';popup.append(link);}
+        if(item.href){const link=document.createElement('a');link.href=archivedHref(item.href);link.textContent=localized(lang,'Mere info','More info');link.target='_blank';link.rel='noopener noreferrer';popup.append(link);}
         marker.bindPopup(popup);layers.push(marker);
       }
       if(layers.length)map.fitBounds(L.featureGroup(layers).getBounds(),{padding:[24,24],maxZoom:14});
@@ -33,7 +34,7 @@ export default function FestivalMap({markers,lines,lang,notice}) {
     <div className="fn-map" ref={root} aria-label={localized(lang,'Interaktivt festivalkort','Interactive festival map')}/>
     {error&&<p role="status">{localized(lang,'Kortet kunne ikke indlæses. Se listen nedenfor.','The map could not load. See the list below.')}</p>}
     <details className="fn-map-list"><summary>{localized(lang,'Vis tidligere arrangementer','View archived events')} ({markers.length})</summary>
-      <ul>{markers.map((item,i)=><li key={i}><strong>{item.title}</strong><p>{item.details.join(' · ')}</p>{item.href&&<a href={item.href} target="_blank" rel="noreferrer">{localized(lang,'Mere info','More info')}</a>}</li>)}</ul>
+      <ul>{markers.map((item,i)=><li key={i}><strong>{item.title}</strong><p>{item.details.join(' · ')}</p>{item.href&&<a href={archivedHref(item.href)} target="_blank" rel="noreferrer">{localized(lang,'Mere info','More info')}</a>}</li>)}</ul>
     </details>
   </>;
 }

@@ -49,3 +49,16 @@ body { margin: 0; background: #171715; color: #f3f0e8; font: 15px system-ui, san
 .editor-import-result { margin-top:12px; padding:12px; border:1px solid #535149; border-radius:6px; overflow-wrap:anywhere; }
 .editor-import-result ul { padding-left:20px; max-height:220px; overflow:auto; }
 .editor input[type=date] { min-width:0; }
+.editor-inline { display:flex; align-items:end; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.editor-inline label { flex:1; margin:0; min-width:140px; }
+.editor-library { display:grid; grid-template-columns:repeat(auto-fill,minmax(105px,1fr)); gap:10px; max-height:440px; overflow:auto; }
+.editor-library figure { margin:0; min-width:0; }
+.editor-library img { display:block; width:100%; height:86px; object-fit:contain; background:#171715; }
+.editor-library figcaption { font-size:11px; overflow-wrap:anywhere; padding:6px 0; }
+.editor-focus-image { position:relative; width:min(100%,360px); aspect-ratio:4/3; }
+.editor-focus-image img { width:100%; height:100%; object-fit:cover; display:block; }
+.editor-focus-image span { position:absolute; bottom:4px; left:4px; padding:4px; background:#171715; font-size:12px; }
+.editor-focus input[type=range] { padding:0; accent-color:#eee9dc; }
+.editor-focus { padding:10px 0; }
+.editor-history-current { padding:14px; background:#242420; border-radius:6px; margin:12px 0; }
+.editor-history-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid #393830; overflow-wrap:anywhere; }

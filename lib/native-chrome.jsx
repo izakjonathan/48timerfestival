@@ -26,7 +26,7 @@ const navLinks = (lang,document) => [
 
 export function SiteLink({href,children,...props}) {
   const route=href?.split(/[?#]/)[0];
-  if(route&&Object.hasOwn(pages,route.endsWith('/')?route:route+'/')&&!props.target&&!props.download)return <Link href={href} {...props}>{children}</Link>;
+  if(route&&(Object.hasOwn(pages,route.endsWith('/')?route:route+'/')||/^\/(?:en\/)?program\/event\/[a-f0-9-]{36}\/$/.test(route))&&!props.target&&!props.download)return <Link href={href} {...props}>{children}</Link>;
   return <a href={href} {...props}>{children}</a>;
 }
 

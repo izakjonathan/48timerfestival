@@ -1,6 +1,7 @@
 import React from 'react';
 import pages from './pages.js';
 import { localized, routeFor, langFor, image, originalImage, optimized, background, Button, SiteLink } from './native-chrome.jsx';
+import {focusStyle} from './editorial.js';
 import Gallery from './native-gallery.jsx';
 import { imageKey } from './appearance.js';
 import { contentEdit, contentValue, contentHref, copy, copyLink } from './content-copy.js';
@@ -41,11 +42,11 @@ function rich(nodes,document,route,prefix) {
 function hasHeading(nodes) {
   return nodes.some(node=>typeof node==='object'&&(node.tag==='h1'||hasHeading(node.children??[])));
 }
-function Photo({src,alt='',banner=false}) {
+function Photo({src,alt='',banner=false,focus}) {
   const sizes=banner?'100vw':'(max-width: 700px) 90vw, 40vw';
   const widths=banner?[640,828,1080,1440,1920]:[384,640,828];
   return <img src={optimized(src,banner?1440:640)} srcSet={widths.map(w=>optimized(src,w)+' '+w+'w').join(', ')} sizes={sizes}
-    alt={alt} data-original={src} decoding="async" loading={banner?'eager':'lazy'} fetchPriority={banner?'high':'auto'}/>;
+    alt={alt} style={focusStyle(focus)} data-original={src} decoding="async" loading={banner?'eager':'lazy'} fetchPriority={banner?'high':'auto'}/>;
 }
 function Module({module,route,document,prefix}) {
   const lang=langFor(route);
@@ -57,7 +58,7 @@ function Module({module,route,document,prefix}) {
     }
     case 'image':{
       const src=asset(document,route,module);
-      const photo=<Photo src={src} alt={module.alt}/>;
+      const photo=<Photo src={src} alt={module.alt} focus={document.imageFocus?.[imageKey(module.src)]}/>;
       return <div className="fn-press-image">{module.href?<a href={linkAsset(document,module.href)}>{photo}</a>:photo}</div>;
     }
     case 'button': {
@@ -66,7 +67,7 @@ function Module({module,route,document,prefix}) {
     case 'location': return <a className="fn-location" href={contentHref(document,route,prefix+".link",module.href)} target="_blank" rel="noreferrer" aria-label={localized(lang,'Vis på kort','Show on map')}><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></a>;
     case 'gallery': return <Gallery lang={lang} images={module.images.map(item=>{
       const src=asset(document,route,item);
-      return {...item,src,full:document.images?.[imageKey(item.src)] || editFor(document,route,item.key).value || image(document,item.full)};
+      return {...item,src,focus:document.imageFocus?.[imageKey(item.src)],full:document.images?.[imageKey(item.src)] || editFor(document,route,item.key).value || image(document,item.full)};
     })}/>;
     case 'map': return <FestivalMap lang={lang} markers={module.markers} lines={module.lines} notice={copy(document,route,'archive.notice')}/>;
     case 'registration': return <EventRegistration lang={lang}/>;
@@ -110,12 +111,12 @@ export default function InnerPage({route,document,Countdown}) {
       if(section.type==='countdown')return <Countdown key={section.id} lang={lang} document={document} sectionId={section.id}/>;
       if(section.type==='banner')return <React.Fragment key={section.id}>
         <section className="fn-inner-banner" style={background(document,section.id,section.color)}>
-          {section.image?<Photo src={image(document,section.image)} banner/>:<div className="fn-wrap fn-inner-banner-empty"/>}
+          {section.image?<Photo src={image(document,section.image)} focus={document.imageFocus?.[imageKey(section.image)]} banner/>:<div className="fn-wrap fn-inner-banner-empty"/>}
         </section>
         {canonical==='/bliv-frivillig/'&&<VolunteerLanding lang={lang} document={document}/>}
       </React.Fragment>;
       return <section className="fn-section fn-inner-content" key={section.id} style={background(document,section.id,section.color)}>
-        <div className="fn-wrap">
+        <div className="fn-wrap" data-fn-reveal>
           {missingTitle&&index===firstContent&&<h1 className="fn-inner-title">{copy(document,route,'page.title')||pageName(route)}</h1>}
           {section.rows.map((row,i)=><div className={'fn-inner-row fn-cols-'+row.length} key={i}>{row.map((column,j)=><div className="fn-inner-column" key={j}>{column.map((module,k)=><Module key={k} prefix={"body."+[index,i,j,k].join(".")} module={module} route={route} document={document}/>)}</div>)}</div>)}
         </div>

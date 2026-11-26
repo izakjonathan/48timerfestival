@@ -1,3 +1,5 @@
+import {defaultSEO} from '../../../lib/seo.js';
+import { validBlocks, completeBlock, validSEO, validLibrary, validFocus, isMedia, clientState, historyList, recordPublication } from '../../../lib/editorial.js';
 import { fontRoles, googleFonts, sectionColors, validTypography } from '../../../lib/design.js';
 import archivedMedia from '../../../content/archived-media.json';
 import { contentRoutes, getContentCatalog, validContent } from '../../../lib/content-copy.js';
@@ -16,7 +18,7 @@ import { palette } from '../../../lib/appearance.js';
 const pageImages = Object.fromEntries(Object.entries(pages).map(([route,page])=>[route,Object.fromEntries(Object.entries(page.images).map(([key,image])=>[key,{...image,value:archivedMedia[key]??image.value}]))]));
 const imageKeys = new Set(Object.values(pageImages).flatMap(Object.keys));
 function validAppearance(key,edits) {
-  return Object.entries(edits).every(([id,value])=>typeof value==='string' && (key==='colors'?Object.hasOwn(palette,id)&&/^#[\da-f]{6}$/i.test(value):imageKeys.has(id)&&/^\/media\/[0-9a-f-]{36}\.webp$/.test(value)));
+  return Object.entries(edits).every(([id,value])=>typeof value==='string' && (key==='colors'?Object.hasOwn(palette,id)&&/^#[\da-f]{6}$/i.test(value):imageKeys.has(id)&&isMedia(value)));
 }
 
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -24,9 +26,9 @@ const json = (value, status = 200) => Response.json(value, { status, headers: { 
 export async function GET() {
   const { state } = await readState();
   return json({
-    ...state, writable: canWrite(), images: pageImages,
+    ...clientState(state), writable: canWrite(), images: pageImages,
     sections: getSectionsByPage(), sectionColors, fontRoles, googleFonts: Object.keys(googleFonts),
-    pages: Object.keys(pages), contentCatalog: Object.fromEntries(contentRoutes.map(route=>[route,getContentCatalog(route)])), defaultDates,
+    pages: Object.keys(pages), seoDefaults:Object.fromEntries(Object.keys(pages).map(route=>[route,defaultSEO(route,state.draft)])), contentCatalog: Object.fromEntries(contentRoutes.map(route=>[route,getContentCatalog(route)])), defaultDates,
   });
 }
 
@@ -41,6 +43,11 @@ function validate(draft) {
     if (route === 'sectionBackgrounds') return validSectionColors(edits);
     if (route === 'programEvents') return validEvents(edits, festivalDates(draft));
     if (route === 'content') return validContent(edits);
+    if (route === 'blocks') return validBlocks(edits,Object.keys(pages));
+    if (route === 'seo') return validSEO(edits,Object.keys(pages));
+    if (route === 'mediaLibrary') return validLibrary(edits);
+    if (route === 'mediaDimensions') return Object.entries(edits).every(([url,size])=>isMedia(url)&&size&&['width','height'].every(k=>Number.isInteger(size[k])&&size[k]>0&&size[k]<=2400));
+    if (route === 'imageFocus') return Object.entries(edits).every(([key,focus])=>imageKeys.has(key)&&validFocus(focus));
     if (route === 'festivalDates') return validFestivalDates(edits);
     if (route === 'typography') return validTypography(draft.fonts ?? {}, edits);
     if (route === 'fonts') return Object.entries(edits).every(([role, family]) =>
@@ -89,21 +96,22 @@ export async function POST(request) {
   const { state, etag } = await readState();
   if (input.revision !== state.revision) return json({ error: 'A newer revision exists. Reload before saving.' }, 409);
   if (input.action === 'restore') {
-    if (!state.previous) return json({ error: 'There is no previous publication.' }, 409);
-    [state.published, state.previous] = [state.previous, state.published];
-    state.draft = state.published;
+    const selected=input.historyId?historyList(state).find(entry=>entry.id===input.historyId)?.document:state.previous;
+    if (!selected) return json({ error: 'Publication not found.' }, 409);
+    const library={...state.published.mediaLibrary,...state.draft.mediaLibrary,...selected.mediaLibrary};
+    const dimensions={...state.published.mediaDimensions,...state.draft.mediaDimensions,...selected.mediaDimensions};
+    recordPublication(state,selected);
+    state.draft = {...state.published,...(Object.keys(library).length?{mediaLibrary:library}:{}),...(Object.keys(dimensions).length?{mediaDimensions:dimensions}:{})};
   } else {
     if (!validate(input.draft)) return json({ error: 'Invalid edit. Use an absolute URL or a site-relative path for links and images.' }, 400);
+    if(input.action==='publish'&&Object.values(input.draft.blocks??{}).flat().some(b=>!completeBlock(b)))return json({error:'Fill or remove empty content blocks before publishing.'},400);
     if (input.action === 'publish' && !validEvents(input.draft.programEvents ?? {},festivalDates(input.draft),true)) return json({error:'All events must fall within the festival dates before publishing.'},400);
     if (input.action === 'publish' && Object.values(input.draft.programEvents ?? {}).some(event => !completeEvent(event))) {
       return json({ error: 'Complete the Danish and English titles, venue and start time for every event before publishing.' }, 400);
     }
     const { colors, colorRoles, elementColors, ...draft } = input.draft;
     state.draft = { ...draft, ...(state.draft.colors ? { colors: state.draft.colors } : {}) };
-    if (input.action === 'publish' && JSON.stringify(state.draft) !== JSON.stringify(state.published)) {
-      state.previous = state.published;
-      state.published = state.draft;
-    }
+    if (input.action === 'publish') recordPublication(state,state.draft);
   }
   state.revision++;
   try {
@@ -113,7 +121,7 @@ export async function POST(request) {
     return json({ error: 'Save failed. Reload to check for a newer revision.' }, 409);
   }
   if (input.action !== 'save') revalidateTag(publicPageTag, { expire: 0 });
-  return json(state);
+  return json(clientState(state));
 }
 
 async function uploadImage(request) {
@@ -136,5 +144,6 @@ async function uploadImage(request) {
     await mkdir('.festival-media', { recursive: true });
     await writeFile('.festival-media/' + name, data, { flag: 'wx' });
   }
-  return json({ url: '/media/' + name });
+  const {width,height}=await sharp(data).metadata();
+  return json({ url: '/media/' + name, width, height });
 }
