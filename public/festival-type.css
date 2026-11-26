@@ -17,7 +17,7 @@ body[data-festival-site] .festival-language a {
 }
 
 body[data-festival-site] #page-container #et-boc,
-body[data-festival-site] #page-container #et-boc :is(.et_pb_text_inner, .et_pb_toggle_content, .et_pb_blurb_description, .festival-registration, .hurrytimer-cdt, a, strong, em, b, small, .leaflet-popup-content, p, ul, ol, li, blockquote, figcaption, label, input, select, textarea):not([class*="et-pb-icon"]):not(.et_pb_font_icon) {
+body[data-festival-site] #page-container #et-boc :is(.et_pb_text_inner, .et_pb_toggle_content, .et_pb_blurb_description, .festival-registration, .hurrytimer-cdt, a, strong, em, b, small, .leaflet-popup-content, p, ul, ol, li, blockquote, figcaption, label, input, select, textarea):where(:not([class*="et-pb-icon"]):not(.et_pb_font_icon)) {
   font-family: var(--festival-type-body) !important;
 }
 
