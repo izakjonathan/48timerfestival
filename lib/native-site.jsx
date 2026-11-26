@@ -1,8 +1,9 @@
 import React from 'react';
-import { langFor, routeFor, localized, image, background, optimized, renderNavigation, renderFooter } from './native-chrome.js';
+import { langFor, routeFor, localized, image, background, optimized, Header, Footer, Arrow, Button } from './native-chrome.jsx';
 import { fontSettings } from './design.js';
 import { imageKey, paletteCSS } from './appearance.js';
 import { categories, festivalDays, publishedEvents } from './program.js';
+import InnerPage from './native-inner.jsx';
 
 const assets = '/festival-assets/wp-content/uploads/';
 const desktopPoster = assets + '2026/02/48-timer-plakat-til-hjemmeside-1.png';
@@ -33,16 +34,8 @@ function Picture({ src, alt, sizes, eager = false, className, mobile }) {
   </picture>;
 }
 
-function Arrow() {
-  return <svg className="fn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M6 18 18 6M7 6h11v11" strokeLinecap="round" strokeLinejoin="round"/></svg>;
-}
-
-function Button({ href, children, secondary = false }) {
-  return <a className={'fn-button' + (secondary ? ' fn-button-outline' : '')} href={href}>{children}<Arrow/></a>;
-}
-
-function Countdown({ lang, document }) {
-  return <section className="fn-section fn-countdown" style={background(document,'countdown','var(--fn-yellow)')}>
+function Countdown({ lang, document, sectionId = 'countdown' }) {
+  return <section className="fn-section fn-countdown" style={background(document,sectionId,'var(--fn-yellow)')}>
     <div className="fn-wrap">
       <h2 className="fn-display">{localized(lang,'Vi ses om','See you in')}</h2>
       <div className="fn-countdown-grid" data-fn-countdown data-date="2027-05-14T00:00:00+02:00">
@@ -148,12 +141,13 @@ export function nativeTheme(document) {
 export function NativeContent({ route, document }) {
   const lang = langFor(route);
   const home = route === '/' || route === '/en/';
+  const program = route === '/program/' || route === '/en/program/';
   const theme = nativeTheme(document);
   return <div className="fn-native" lang={lang}>
     <link rel="stylesheet" href={theme.href}/>
     <style>{theme.css}</style>
-    <div className="fn-chrome" dangerouslySetInnerHTML={{__html:renderNavigation(route,document)}}/>
-    <main id="main-content" className="fn-main">{home ? <Home lang={lang} document={document}/> : <Program lang={lang} document={document}/>}</main>
-    <div className="fn-chrome" dangerouslySetInnerHTML={{__html:renderFooter(route,document)}}/>
+    <Header route={route} document={document}/>
+    <main id="main-content" className="fn-main">{home ? <Home lang={lang} document={document}/> : program ? <Program lang={lang} document={document}/> : <InnerPage route={route} document={document} Countdown={Countdown}/>}</main>
+    <Footer route={route} document={document}/>
   </div>;
 }

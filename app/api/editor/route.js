@@ -9,7 +9,12 @@ import sharp from 'sharp';
 import pages from '../../../lib/pages.js';
 import { canWrite, hasBlobStore, readState, saveState } from '../../../lib/editor.js';
 
-import { pageImages, renderPage, validAppearance } from '../../../lib/site-render.js';
+import { palette } from '../../../lib/appearance.js';
+const pageImages = Object.fromEntries(Object.entries(pages).map(([route,page])=>[route,page.images]));
+const imageKeys = new Set(Object.values(pageImages).flatMap(Object.keys));
+function validAppearance(key,edits) {
+  return Object.entries(edits).every(([id,value])=>typeof value==='string' && (key==='colors'?Object.hasOwn(palette,id)&&/^#[\da-f]{6}$/i.test(value):imageKeys.has(id)&&/^\/media\/[0-9a-f-]{36}\.webp$/.test(value)));
+}
 
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 
@@ -70,14 +75,9 @@ export async function POST(request) {
   } catch { return json({ error: 'Invalid JSON.' }, 400); }
   if (input?.action === 'preview') {
     if (!Object.hasOwn(pages, input.path) || !validate(input.draft)) return json({ error: 'Invalid preview.' }, 400);
-    if (['/', '/en/', '/program/', '/en/program/'].includes(input.path)) {
-      const payload = JSON.stringify({ route: input.path, document: input.draft }).replace(/</g, '\\u003c');
-      const html = '<!doctype html><html><head><meta name="robots" content="noindex,nofollow"><title>Draft preview</title></head><body><script>sessionStorage.setItem("festival-draft-preview", ' + JSON.stringify(payload).replace(/</g,'\\u003c') + ');location.replace("/admin/preview");</script></body></html>';
-      return new Response(html, { headers: { 'Content-Type': (previewTab ? 'text/html' : 'text/plain') + '; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
-    }
-    return new Response(renderPage(input.path, input.draft, { preview: true }), {
-      headers: { 'Content-Type': (previewTab ? 'text/html' : 'text/plain') + '; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
-    });
+    const payload = JSON.stringify({ route: input.path, document: input.draft }).replace(/</g, '\\u003c');
+    const html = '<!doctype html><html><head><meta name="robots" content="noindex,nofollow"><title>Draft preview</title></head><body><script>sessionStorage.setItem("festival-draft-preview", ' + JSON.stringify(payload).replace(/</g,'\\u003c') + ');location.replace("/admin/preview");</script></body></html>';
+    return new Response(html, { headers: { 'Content-Type': (previewTab ? 'text/html' : 'text/plain') + '; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
   }
   if (!canWrite()) return json({ error: 'Connect a private Vercel Blob store to enable publishing.' }, 503);
   if (!input || !['save', 'publish', 'restore'].includes(input.action)) return json({ error: 'Unknown action.' }, 400);

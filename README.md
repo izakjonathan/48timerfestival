@@ -1,25 +1,23 @@
 # 48 Timer Festival
 
-Next.js migration of the Danish and English public site at https://www.48timerfestival.dk/en/. The homepage and programme in both languages use native App Router pages and shared navigation and footer. The remaining routes retain the imported WordPress/Divi content, with the new shared navigation and footer. The saved snapshot is `content/pages.json.gz`; development and build commands unpack it automatically. This GitHub version serves static assets through the original festival host. The migration ZIP contains the local asset snapshot under `public/festival-assets` and those assets can be added here. Pages are served by the Next.js App Router.
+A bilingual Next.js App Router site. All 28 public pages are rendered using native React components. Festival content is structured in `content/native-pages.json`; the homepage, programme, inner pages, gallery, map, forms, navigation and footer share the festival design system. WordPress snapshots remain in the repository only as source material for the offline content migration. The public website does not load Divi stylesheets or scripts.
 
 ## Run locally
 
-Use Node 24. Run `npm ci`, then run `npm run dev`. Visit `/` for Danish, `/en/` for English and `/admin` for the editor. The editor is open to anyone who can reach it. Local drafts and publications use a gitignored JSON file unless a private Blob token is configured.
+Use Node 24. Run `npm ci`, then `npm run dev`. Visit `/` for Danish, `/en/` for English and `/admin` for the editor. Local drafts and publications use a gitignored JSON file unless a private Blob token is configured.
 
 ## Deploy
 
-Push this project to a GitHub repository and import it in Vercel using the Next.js preset. Connect a dedicated **private Vercel Blob** store using Vercel’s default OIDC connection or a `BLOB_READ_WRITE_TOKEN`. Use separate stores for preview and production if both environments need independent editorial state. The existing festival domain can continue serving WordPress during review.
+Push the project to GitHub and import it in Vercel using the Next.js preset. Connect a dedicated private Vercel Blob store using the default OIDC connection or a BLOB_READ_WRITE_TOKEN. Use separate stores for preview and production if both environments need independent editorial state.
 
 ## Edit
 
-Use **Section backgrounds** to choose a festival color for a page section. Choices apply to the matching Danish and English sections, and shared sections apply sitewide. Use **Fonts** to set Google Fonts for main headings, subheadings, buttons and menu links, and body text. Use **Images** to replace images with the device’s photo or file picker. Replacements apply wherever the same imported image is used. The homepage offers a desktop poster and an optional mobile poster override.
+Section backgrounds apply to the corresponding Danish and English sections; shared navigation, footer and countdown settings apply globally. Fonts, weights, line heights and letter spacing apply to the four type roles. Images can be replaced using the device picker. The programme editor supports bilingual events for 14–16 May 2027, including day, time, category and venue. Save draft, preview, publish and restore previous use the existing Blob document.
 
-**Program** lets you add bilingual events for 14–16 May 2027, with start/end times, category, venue, description and an optional event link. The public programme shows day, category, venue and search filters when events are published.
+## External services
 
-**Save draft** stores changes for later. **Publish** applies them to the public pages. **Restore previous** restores the preceding publication, including its colors and images. Large photos are resized when the browser can open them. External embeds and images loaded dynamically by third-party services remain managed at their source.
+Original imagery remains available through the image asset proxy, with optimized responsive images and support for Blob replacements. Event registration submits to the existing Google Forms destination. Volunteer registration uses a native form with the original live WordPress submission fields and user-entered verification question, with a link to the original form if it cannot be loaded. The original site must remain available for volunteer submission and source asset delivery. The archive map uses Leaflet and Esri map tiles. Real form delivery should be checked with the festival organisers before switching the domain.
 
-## WordPress dependencies
+## Content migration
 
-Volunteer form actions and EventON integration still refer to WordPress and require a working origin. A small number of missing assets fall back to the existing host. Test form delivery, live calendar interactions, gallery and navigation on the new deployment before any DNS cutover. For a fully independent migration, move these functions and outstanding assets off WordPress first.
-
-Refresh the baseline only deliberately. `python scripts/import-site.py` requires Python, lxml and curl. Field IDs are assigned in document order, so a new import can invalidate existing editorial overrides. Back up and reconcile published data before replacing a baseline.
+Run `npm run migrate-content` to regenerate structured page content from the archived compressed snapshots. This is deliberate maintenance; normal Next.js builds use the checked-in structured JSON directly. Reconcile field IDs and image keys before replacing snapshots.
