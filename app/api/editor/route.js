@@ -1,5 +1,5 @@
-import { renderCanvas } from '../../../lib/editor-canvas.js';
-import { colorRoles } from '../../../lib/color-roles.js';
+import { fontRoles, googleFonts, sectionColors } from '../../../lib/design.js';
+import { getSectionsByPage, validSectionColors } from '../../../lib/sections.js';
 import { revalidateTag } from 'next/cache';
 import { publicPageTag } from '../../../lib/public-page-cache.js';
 import { put } from '@vercel/blob';
@@ -8,20 +8,16 @@ import sharp from 'sharp';
 import pages from '../../../lib/pages.js';
 import { canWrite, hasBlobStore, readState, saveState } from '../../../lib/editor.js';
 
-import { listColorElements, pageImages, palette, renderPage, validAppearance } from '../../../lib/site-render.js';
+import { pageImages, renderPage, validAppearance } from '../../../lib/site-render.js';
 
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 
-export async function GET(request) {
+export async function GET() {
   const { state } = await readState();
-  const path = new URL(request.url).searchParams.get('elements');
-  if (path !== null) {
-    if (!Object.hasOwn(pages, path)) return json({ error: 'Unknown page.' }, 404);
-    return json({ elements: listColorElements(path, state.draft) });
-  }
   return json({
-    ...state, writable: canWrite(), palette, images: pageImages,
-    pages: Object.fromEntries(Object.entries(pages).map(([path, page]) => [path, page.fields])),
+    ...state, writable: canWrite(), images: pageImages,
+    sections: getSectionsByPage(), sectionColors, fontRoles, googleFonts: Object.keys(googleFonts),
+    pages: Object.keys(pages),
   });
 }
 
@@ -33,18 +29,11 @@ function validate(draft) {
   if (!draft || typeof draft !== 'object' || Array.isArray(draft)) return false;
   return Object.entries(draft).every(([route, edits]) => {
     if (!edits || typeof edits !== 'object' || Array.isArray(edits)) return false;
-    if (route === 'colorRoles') return Object.entries(edits).every(([role, swatch]) =>
-      Object.hasOwn(colorRoles, role) && typeof swatch === 'string' && Object.hasOwn(palette, swatch)
+    if (route === 'sectionBackgrounds') return validSectionColors(edits);
+    if (route === 'fonts') return Object.entries(edits).every(([role, family]) =>
+      Object.hasOwn(fontRoles, role) && typeof family === 'string' && Object.hasOwn(googleFonts, family)
     );
-    if (route === 'elementColors') return Object.entries(edits).every(([path, assignments]) =>
-      Object.hasOwn(pages, path) && assignments && typeof assignments === 'object' && !Array.isArray(assignments) &&
-      Object.entries(assignments).every(([id, values]) =>
-        /^element-\d{1,5}$/.test(id) && values && typeof values === 'object' && !Array.isArray(values) &&
-        Object.entries(values).every(([property, swatch]) =>
-          ['color', 'background-color'].includes(property) && typeof swatch === 'string' && Object.hasOwn(palette, swatch)
-        )
-      )
-    );
+    if (route === 'colorRoles' || route === 'elementColors') return true;
     if (route === 'colors' || route === 'images') return validAppearance(route, edits);
     if (!Object.hasOwn(pages, route)) return false;
     return Object.entries(edits).every(([key, edit]) => {
@@ -76,15 +65,6 @@ export async function POST(request) {
       input = { action: 'preview', path: form.get('path'), draft: JSON.parse(form.get('draft')) };
     } else input = JSON.parse(body);
   } catch { return json({ error: 'Invalid JSON.' }, 400); }
-  if (input?.action === 'canvas') {
-    if (!Object.hasOwn(pages, input.path) || !validate(input.draft) ||
-        typeof input.instance !== 'string' || !/^[0-9a-f-]{36}$/.test(input.instance)) {
-      return json({ error: 'Invalid editing view.' }, 400);
-    }
-    return new Response(renderCanvas(input.path, input.draft, origin, input.instance), {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
-    });
-  }
   if (input?.action === 'preview') {
     if (!Object.hasOwn(pages, input.path) || !validate(input.draft)) return json({ error: 'Invalid preview.' }, 400);
     return new Response(renderPage(input.path, input.draft, { preview: true }), {
@@ -101,7 +81,8 @@ export async function POST(request) {
     state.draft = state.published;
   } else {
     if (!validate(input.draft)) return json({ error: 'Invalid edit. Use an absolute URL or a site-relative path for links and images.' }, 400);
-    state.draft = input.draft;
+    const { colors, colorRoles, elementColors, ...draft } = input.draft;
+    state.draft = { ...draft, ...(state.draft.colors ? { colors: state.draft.colors } : {}) };
     if (input.action === 'publish' && JSON.stringify(state.draft) !== JSON.stringify(state.published)) {
       state.previous = state.published;
       state.published = state.draft;
