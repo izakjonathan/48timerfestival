@@ -36,6 +36,7 @@ for(const path of initial.pages){
  assert.ok($('meta[property="og:image"]').attr('content'),path);
  if(path===route){assert.match($('title').text(),/TEST SEO/);assert.equal($('meta[name=description]').attr('content'),'TEST META');assert.match($('.fn-custom-block').text(),/TEST BLOCK/);assert.match($('.fn-block-photo img').attr('style'),/10% 70%/);assert.equal($('.fn-block-photo img').attr('alt'),'Test image');}
  if(path==='/')assert.equal($('.fn-custom-block').length,0);
+ if(path.endsWith('/kontakt-og-information/')){assert.equal($('a[href="https://kulturn.kk.dk/st%C3%B8beriet"]').length,0);assert.ok($('a[href="https://kulturogfritidn.kk.dk/huse/stoeberiet"]').length);assert.ok($('a[href="https://kulturogfritidn.kk.dk/huse/noerrebrohallen"]').length);assert.ok($('a[href="https://union.kk.dk/om-os"]').length);}
  if(path.endsWith('/bliv-aktoer/'))assert.match($('.festival-registration').attr('action'),/docs.google.com\/forms/);
  $('a[href]').each((_,el)=>{const h=$(el).attr('href');if(h.startsWith('/')&&!h.startsWith('//')&&!h.startsWith('/media/')&&!h.startsWith('/festival-'))internal.add(h.split(/[?#]/)[0]);else if(/^https?:/.test(h))external.add(h);});
 }
