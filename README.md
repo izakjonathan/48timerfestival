@@ -1,6 +1,6 @@
 # 48 Timer Festival
 
-Next.js migration of the Danish and English public site at https://www.48timerfestival.dk/en/. The 28 imported pages retain the WordPress/Divi HTML, CSS, scripts and routes. The saved snapshot is `content/pages.json.gz`; development and build commands unpack it automatically. This GitHub version serves static assets through the original festival host. The migration ZIP contains the local asset snapshot under `public/festival-assets` and those assets can be added here. Pages are served by the Next.js App Router.
+Next.js migration of the Danish and English public site at https://www.48timerfestival.dk/en/. The homepage and programme in both languages use native App Router pages and shared navigation and footer. The remaining routes retain the imported WordPress/Divi content, with the new shared navigation and footer. The saved snapshot is `content/pages.json.gz`; development and build commands unpack it automatically. This GitHub version serves static assets through the original festival host. The migration ZIP contains the local asset snapshot under `public/festival-assets` and those assets can be added here. Pages are served by the Next.js App Router.
 
 ## Run locally
 
@@ -13,6 +13,8 @@ Push this project to a GitHub repository and import it in Vercel using the Next.
 ## Edit
 
 Use **Section backgrounds** to choose a festival color for a page section. Choices apply to the matching Danish and English sections, and shared sections apply sitewide. Use **Fonts** to set Google Fonts for main headings, subheadings, buttons and menu links, and body text. Use **Images** to replace images with the device’s photo or file picker. Replacements apply wherever the same imported image is used. The homepage offers a desktop poster and an optional mobile poster override.
+
+**Program** lets you add bilingual events for 14–16 May 2027, with start/end times, category, venue, description and an optional event link. The public programme shows day, category, venue and search filters when events are published.
 
 **Save draft** stores changes for later. **Publish** applies them to the public pages. **Restore previous** restores the preceding publication, including its colors and images. Large photos are resized when the browser can open them. External embeds and images loaded dynamically by third-party services remain managed at their source.
 

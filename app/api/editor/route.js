@@ -1,4 +1,5 @@
 import { fontRoles, googleFonts, sectionColors, validTypography } from '../../../lib/design.js';
+import { completeEvent, validEvents } from '../../../lib/program.js';
 import { getSectionsByPage, validSectionColors } from '../../../lib/sections.js';
 import { revalidateTag } from 'next/cache';
 import { publicPageTag } from '../../../lib/public-page-cache.js';
@@ -30,6 +31,7 @@ function validate(draft) {
   return Object.entries(draft).every(([route, edits]) => {
     if (!edits || typeof edits !== 'object' || Array.isArray(edits)) return false;
     if (route === 'sectionBackgrounds') return validSectionColors(edits);
+    if (route === 'programEvents') return validEvents(edits);
     if (route === 'typography') return validTypography(draft.fonts ?? {}, edits);
     if (route === 'fonts') return Object.entries(edits).every(([role, family]) =>
       Object.hasOwn(fontRoles, role) && typeof family === 'string' && Object.hasOwn(googleFonts, family)
@@ -68,6 +70,11 @@ export async function POST(request) {
   } catch { return json({ error: 'Invalid JSON.' }, 400); }
   if (input?.action === 'preview') {
     if (!Object.hasOwn(pages, input.path) || !validate(input.draft)) return json({ error: 'Invalid preview.' }, 400);
+    if (['/', '/en/', '/program/', '/en/program/'].includes(input.path)) {
+      const payload = JSON.stringify({ route: input.path, document: input.draft }).replace(/</g, '\\u003c');
+      const html = '<!doctype html><html><head><meta name="robots" content="noindex,nofollow"><title>Draft preview</title></head><body><script>sessionStorage.setItem("festival-draft-preview", ' + JSON.stringify(payload).replace(/</g,'\\u003c') + ');location.replace("/admin/preview");</script></body></html>';
+      return new Response(html, { headers: { 'Content-Type': (previewTab ? 'text/html' : 'text/plain') + '; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
+    }
     return new Response(renderPage(input.path, input.draft, { preview: true }), {
       headers: { 'Content-Type': (previewTab ? 'text/html' : 'text/plain') + '; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
     });
@@ -82,6 +89,9 @@ export async function POST(request) {
     state.draft = state.published;
   } else {
     if (!validate(input.draft)) return json({ error: 'Invalid edit. Use an absolute URL or a site-relative path for links and images.' }, 400);
+    if (input.action === 'publish' && Object.values(input.draft.programEvents ?? {}).some(event => !completeEvent(event))) {
+      return json({ error: 'Complete the Danish and English titles, venue and start time for every event before publishing.' }, 400);
+    }
     const { colors, colorRoles, elementColors, ...draft } = input.draft;
     state.draft = { ...draft, ...(state.draft.colors ? { colors: state.draft.colors } : {}) };
     if (input.action === 'publish' && JSON.stringify(state.draft) !== JSON.stringify(state.published)) {

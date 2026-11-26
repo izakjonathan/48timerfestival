@@ -35,3 +35,10 @@ body { margin: 0; background: #171715; color: #f3f0e8; font: 15px system-ui, san
 @media (max-width: 540px) {
   .editor-font-metrics { grid-template-columns: 1fr; gap: 10px; }
 }
+
+.editor-program-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.editor-program-heading h2 { font-size: 21px; margin: 0 0 4px; }
+.editor-program-heading p { margin: 0; font-size: 13px; color: #bfbcb1; }
+.editor-event-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 4px 12px; }
+.editor textarea { width: 100%; min-width: 0; resize: vertical; background: #242420; border: 1px solid #535149; padding: 8px 10px; border-radius: 6px; font: inherit; color: inherit; font-size: 16px; }
+@media (max-width: 500px) { .editor-event-grid { grid-template-columns: 1fr; } }

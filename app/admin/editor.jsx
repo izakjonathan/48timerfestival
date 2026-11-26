@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { blankEvent, categories, completeEvent, festivalDays } from '../../lib/program.js';
 import { googleFonts, resolveTypography, typographyLimits } from '../../lib/design.js';
 
 const weightNames = { 100: 'Thin', 200: 'Extra light', 300: 'Light', 400: 'Regular', 500: 'Medium', 600: 'Semibold', 700: 'Bold', 800: 'Extra bold', 900: 'Black' };
@@ -25,6 +26,7 @@ export default function Editor() {
   const [pending, setPending] = useState(false);
   const [filter, setFilter] = useState('');
   const [tab, setTab] = useState('sections');
+  const [openEvent, setOpenEvent] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -67,6 +69,19 @@ export default function Editor() {
     setDraft(previous => ({
       ...previous,
       typography: { ...previous.typography, [role]: { ...previous.typography?.[role], [property]: Number(value) } },
+    }));
+  }
+
+  function addEvent() {
+    const id = crypto.randomUUID();
+    updateAppearance('programEvents', id, blankEvent());
+    setOpenEvent(id);
+  }
+
+  function updateEvent(id, key, value) {
+    setDraft(previous => ({
+      ...previous,
+      programEvents: { ...previous.programEvents, [id]: { ...previous.programEvents[id], [key]: value } },
     }));
   }
 
@@ -126,12 +141,12 @@ export default function Editor() {
       <fieldset disabled={pending} className="editor-workspace" aria-label="Site settings">
         <section className="editor-fields">
           <nav aria-label="Editor sections" className="editor-tabs">
-            {Object.entries({ sections: 'Section backgrounds', fonts: 'Fonts', images: 'Images' }).map(([key, title]) =>
+            {Object.entries({ sections: 'Section backgrounds', fonts: 'Fonts', images: 'Images', program: 'Program' }).map(([key, title]) =>
               <button key={key} type="button" aria-pressed={tab === key}
-                onClick={() => { setTab(key); setFilter(''); }}>{title}</button>
+                onClick={() => { setTab(key); setFilter(''); if (key === 'program') setPath('/en/program/'); }}>{title}</button>
             )}
           </nav>
-          {tab !== 'fonts' && <label>Page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); }}>
+          {!['fonts', 'program'].includes(tab) && <label>Page<select value={path} onChange={(event) => { setPath(event.target.value); setFilter(''); }}>
             {['English', 'Dansk'].map((language) => <optgroup key={language} label={language}>
               {state.pages.filter((route) => languageFor(route) === language).map((route) =>
                 <option key={route} value={route}>{labelFor(route)}</option>)}
@@ -187,6 +202,36 @@ export default function Editor() {
                 </div>
               </fieldset>;
             })}
+          </div>}
+          {tab === 'program' && <div className="editor-program">
+            <div className="editor-program-heading">
+              <div><h2>Festival programme</h2><p>14–16 May 2027 · Danish and English</p></div>
+              <button type="button" onClick={addEvent}>+ Add event</button>
+            </div>
+            <p>{Object.keys(draft.programEvents ?? {}).length} events in draft. Publish when the programme is ready.</p>
+            {Object.entries(draft.programEvents ?? {}).map(([id, event]) => <details key={id}
+              open={openEvent === id ? true : undefined}>
+              <summary>{event.titleEn || event.titleDa || 'Untitled event'} · {event.day.slice(5)}{event.start && ' · ' + event.start}{!completeEvent(event) && ' · Incomplete'}</summary>
+              <div className="editor-event-grid">
+                <label>Day<select value={event.day} onChange={e => updateEvent(id,'day',e.target.value)}>
+                  {festivalDays.map(day => <option key={day} value={day}>{day}</option>)}
+                </select></label>
+                <label>Category<select value={event.category} onChange={e => updateEvent(id,'category',e.target.value)}>
+                  {Object.entries(categories).map(([key,category]) => <option key={key} value={key}>{category.en}</option>)}
+                </select></label>
+                <label>Start time<input type="time" value={event.start} onChange={e => updateEvent(id,'start',e.target.value)}/></label>
+                <label>End time (optional)<input type="time" value={event.end} onChange={e => updateEvent(id,'end',e.target.value)}/></label>
+                {[
+                  ['titleDa','Title · Danish'], ['titleEn','Title · English'], ['venue','Venue'], ['address','Address'],
+                  ['link','Event link (optional)'],
+                ].map(([key,label]) => <label key={key}>{label}<input type={key === 'link' ? 'url' : 'text'} maxLength={300} value={event[key]} onChange={e => updateEvent(id,key,e.target.value)}/></label>)}
+              </div>
+              {['Da','En'].map(language => <label key={language}>Description · {language === 'Da' ? 'Danish' : 'English'}<textarea rows={4} maxLength={3000} value={event['description'+language]} onChange={e=>updateEvent(id,'description'+language,e.target.value)}/></label>)}
+              <button type="button" onClick={() => {
+                if (window.confirm('Remove this event from the draft?')) updateAppearance('programEvents',id,null);
+              }}>Remove event</button>
+            </details>)}
+            <label>Preview programme<select value={path === '/program/' ? '/program/' : '/en/program/'} onChange={e=>setPath(e.target.value)}><option value="/en/program/">English</option><option value="/program/">Dansk</option></select></label>
           </div>}
           {tab === 'images' && <>
           <label>Find an image<input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} /></label>
