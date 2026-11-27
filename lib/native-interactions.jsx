@@ -16,13 +16,41 @@ export default function PublicInteractions({route,preview=false}) {
   const header = document.querySelector('[data-fn-header]');
   const toggle = header?.querySelector('.fn-menu-toggle');
   const menu = header?.querySelector('.fn-mobile-nav');
-  let closeTimer;
+  let closeTimer,themeFrame=0;
+  const previousRootColor=document.documentElement.style.backgroundColor;
+  const previousBodyColor=document.body.style.backgroundColor;
+  const home=route==='/'||route==='/en/';
+  const themeSections=home?[...document.querySelectorAll('.fn-main > section,.fn-main > .fn-ticker,.fn-footer,.fn-copyright')]:[];
+  function syncBrowserColor(){
+    themeFrame=0;
+    if(preview||!header)return;
+    let surface=header;
+    if(home&&toggle?.getAttribute('aria-expanded')!=='true'){
+      surface=themeSections[0]??header;
+      for(const section of themeSections){const rect=section.getBoundingClientRect();if(rect.top<=1&&rect.bottom>1)surface=section;}
+    }
+    const color=getComputedStyle(surface).backgroundColor;
+    const meta=document.querySelector('meta[name="theme-color"]');
+    if(color&&color!=='transparent'&&color!=='rgba(0, 0, 0, 0)'){
+      if(meta&&meta.content!==color)meta.content=color;
+      document.documentElement.style.backgroundColor=color;
+      document.body.style.backgroundColor=color;
+    }
+  }
+  function scheduleBrowserColor(){if(!preview&&!themeFrame)themeFrame=requestAnimationFrame(syncBrowserColor);}
+  if(!preview){
+    addEventListener('scroll',scheduleBrowserColor,{passive:true,signal});
+    addEventListener('resize',scheduleBrowserColor,{passive:true,signal});
+    addEventListener('pageshow',scheduleBrowserColor,{signal});
+    scheduleBrowserColor();
+  }
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   function setMenu(open, immediate = false) {
     if (!menu) return;
     clearTimeout(closeTimer);
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? toggle.dataset.closeLabel : toggle.dataset.openLabel);
+    scheduleBrowserColor();
     if (open) {
       menu.hidden = false; menu.inert = false;
       delete menu.dataset.closing; menu.dataset.open = '';
@@ -108,6 +136,8 @@ export default function PublicInteractions({route,preview=false}) {
     observer?.disconnect();tickerObserver?.disconnect();
     if(menu&&toggle)setMenu(false,true);
     document.body.style.overflow='';
+    cancelAnimationFrame(themeFrame);
+    if(!preview){document.documentElement.style.backgroundColor=previousRootColor;document.body.style.backgroundColor=previousBodyColor;}
   };
   },[route,preview]);
   return null;

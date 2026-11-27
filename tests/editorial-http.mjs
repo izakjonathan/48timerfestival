@@ -19,7 +19,7 @@ const route='/en/',block={...newBlock('split'),heading:'TEST BLOCK',body:'TEST D
 const dates=initial.draft.festivalDates??initial.defaultDates;
 const eventId='00000000-0000-0000-0000-000000000000';
 const event={day:dates.start,start:'19:00',end:'21:00',category:'music',titleDa:'Test dansk',titleEn:'Test event',venue:'Example venue',address:'Blågårds Plads 2, København N',descriptionDa:'Dansk test',descriptionEn:'English test',link:''};
-const draft={...initial.draft,mediaLibrary:{...initial.draft.mediaLibrary,[asset.url]:'Test image'},mediaDimensions:{...initial.draft.mediaDimensions,[asset.url]:{width:asset.width,height:asset.height}},blocks:{[route]:[block]},seo:{[route]:{title:'TEST SEO',description:'TEST META',image:asset.url}},programEvents:{[eventId]:event}};
+const draft={...initial.draft,sectionBackgrounds:{...initial.draft.sectionBackgrounds,'/et_pb_section_0':'#f43372'},mediaLibrary:{...initial.draft.mediaLibrary,[asset.url]:'Test image'},mediaDimensions:{...initial.draft.mediaDimensions,[asset.url]:{width:asset.width,height:asset.height}},blocks:{[route]:[block]},seo:{[route]:{title:'TEST SEO',description:'TEST META',image:asset.url}},programEvents:{[eventId]:event}};
 const [invalid]=await req('/api/editor',{action:'save',revision:initial.revision,draft:{...draft,blocks:{[route]:[{...block,href:'javascript:alert(1)'}]}}});assert.equal(invalid.status,400);
 const [preview,payload]=await req('/api/editor',{path:route,draft:JSON.stringify(draft)},true);assert.equal(preview.status,200);assert.match(payload,/festival-draft-preview/);
 const [savedResponse,saved]=await req('/api/editor',{action:'save',revision:initial.revision,draft});assert.equal(savedResponse.status,200,JSON.stringify(saved));
@@ -34,6 +34,7 @@ for(const path of initial.pages){
  assert.equal($('link[rel=alternate][hreflang=da-DK]').length,1,path);
  assert.equal($('link[rel=alternate][hreflang=en-GB]').length,1,path);
  assert.ok($('meta[property="og:image"]').attr('content'),path);
+ assert.equal($('meta[name=theme-color]').length,1,path);
  if(path===route){assert.match($('title').text(),/TEST SEO/);assert.equal($('meta[name=description]').attr('content'),'TEST META');assert.match($('.fn-custom-block').text(),/TEST BLOCK/);assert.match($('.fn-block-photo img').attr('style'),/10% 70%/);assert.equal($('.fn-block-photo img').attr('alt'),'Test image');}
  if(path==='/')assert.equal($('.fn-custom-block').length,0);
  if(path==='/'||path==='/en/'){
@@ -48,7 +49,12 @@ for(const path of initial.pages){
    assert.equal($('.fn-home-program .fn-program-promo .fn-actions a').length,1);
    assert.equal($('.fn-home-explore .fn-card').length,3);
    assert.equal($('.fn-home-explore .fn-about').length,1);
-   assert.equal($('.fn-home-sponsors .fn-sponsor-grid img').length,9);
+   assert.equal($('.fn-home-sponsors .fn-sponsor-slide img').length,9);
+   assert.equal($('.fn-sponsor-slide[data-active=true]').length,1);
+   assert.equal($('.fn-sponsor-dots button').length,9);
+   assert.equal($('.fn-sponsor-controls button').length,3);
+   assert.equal($('.fn-home-explore .fn-about a').length,0);
+   assert.equal($('meta[name=theme-color]').attr('content'),'#f43372');
    assert.equal($('.fn-countdown [data-unit]').length,4);
  } else { assert.equal($('.fn-home').length,0,path); assert.equal($('.fn-header-home,.fn-footer-home').length,0,path); }
  if(path.endsWith('/kontakt-og-information/')){assert.equal($('a[href="https://kulturn.kk.dk/st%C3%B8beriet"]').length,0);assert.ok($('a[href="https://kulturogfritidn.kk.dk/huse/stoeberiet"]').length);assert.ok($('a[href="https://kulturogfritidn.kk.dk/huse/noerrebrohallen"]').length);assert.ok($('a[href="https://union.kk.dk/om-os"]').length);}

@@ -30,3 +30,11 @@ test('publication history preserves old and rollback version, limits entries and
  for(let i=0;i<30;i++){state.revision++;recordPublication(state,{a:i+3});}
  assert.equal(state.history.length,20);
 });
+
+import {browserThemeColor} from '../lib/appearance.js';
+test('browser theme follows the published poster and header palette',()=>{
+ assert.equal(browserThemeColor({},true),'#ff533d');
+ assert.equal(browserThemeColor({colors:{'2b141e':'#112233'}},true),'#112233');
+ assert.equal(browserThemeColor({sectionBackgrounds:{'/et_pb_section_0':'#f43372'},colors:{'2b141e':'#112233'}},true),'#f43372');
+ assert.equal(browserThemeColor({colors:{f9f5c7:'#f0e1b2'}}),'#f0e1b2');
+});

@@ -1,6 +1,8 @@
+import {browserThemeColor} from '../../../lib/appearance.js';
 import {metadataFor,eventAt} from '../../../lib/seo.js';
 import {publicDocument} from '../../../lib/public-page-cache.js';
 import NativePage from '../../../lib/native-page.jsx';
+export async function generateViewport(){return {themeColor:browserThemeColor(await publicDocument(),true)};}
 export const dynamic = 'force-dynamic';
 export async function generateMetadata(){return metadataFor('/en/',await publicDocument());}
 export default function Page() { return <NativePage route="/en/"/>; }

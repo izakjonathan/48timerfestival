@@ -10,6 +10,7 @@ import {eventAt,eventRoute,eventSchema} from './seo.js';
 import Blocks from './native-blocks.jsx';
 import {focusStyle} from './editorial.js';
 import InnerPage from './native-inner.jsx';
+import SponsorSlideshow from './native-sponsors.jsx';
 
 const assets = '/festival-assets/wp-content/uploads/';
 const desktopPoster = assets + '2026/02/48-timer-plakat-til-hjemmeside-1.png';
@@ -93,17 +94,15 @@ function Home({ lang, document }) {
           <div>
             <p>{text('hero.intro')}</p>
             <p>{text('about.body')}</p>
-            <div className="fn-actions fn-home-about-links">
-              <SiteLink className="fn-text-link" href={link('about.link').href}>{link('about.link').text} <Arrow/></SiteLink>
-              <SiteLink className="fn-text-link" href={link('hero.program').href}>{link('hero.program').text} <Arrow/></SiteLink>
-              <SiteLink className="fn-text-link" href={link('hero.participate').href}>{link('hero.participate').text} <Arrow/></SiteLink>
-            </div>
           </div>
         </div>
       </div>
     </section>
     <section className="fn-section fn-sponsors fn-home-sponsors" style={background(document,'/et_pb_section_4','var(--fn-teal)')}>
-      <div className="fn-wrap" data-fn-reveal><h2 className="fn-display">{text('sponsors.heading')}</h2><div className="fn-sponsor-grid">{sponsors.map(([name,src]) => <div key={src}><img src={optimized(image(document,assets+src),384)} data-original={image(document,assets+src)} alt={name} loading="lazy" decoding="async"/></div>)}</div></div>
+      <div className="fn-wrap" data-fn-reveal>
+        <h2 className="fn-display">{text('sponsors.heading')}</h2>
+        <SponsorSlideshow lang={lang} slides={sponsors.map(([name,src])=>{const original=image(document,assets+src);return {name,original,src:optimized(original,640)};})}/>
+      </div>
     </section>
     <Countdown lang={lang} document={document}/>
   </>;
