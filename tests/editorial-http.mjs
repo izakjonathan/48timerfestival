@@ -38,16 +38,19 @@ for(const path of initial.pages){
  if(path==='/')assert.equal($('.fn-custom-block').length,0);
  if(path==='/'||path==='/en/'){
    const sections=$('.fn-home').children().filter((_,el)=>!$(el).hasClass('fn-custom-block')).toArray();
-   assert.deepEqual(sections.map(el=>($(el).attr('class')??'').split(' ').at(-1)),['fn-home-poster','fn-ticker','fn-home-intro','fn-home-program','fn-home-explore','fn-home-sponsors','fn-countdown']);
+   assert.deepEqual(sections.map(el=>($(el).attr('class')??'').split(' ').at(-1)),['fn-home-poster','fn-ticker','fn-home-program','fn-home-explore','fn-home-sponsors','fn-countdown']);
    assert.equal($('.fn-home-poster picture source').attr('media'),'(max-width: 700px)');
    assert.equal($('.fn-home-poster img').attr('sizes'),'100vw');
-   assert.equal($('.fn-home-intro h1').length,1);
-   assert.equal($('.fn-home-program .fn-program-promo .fn-actions a').length,2);
+   assert.equal($('.fn-home-poster h1').length,1);
+   assert.equal($('.fn-home-intro').length,0);
+   assert.equal($('.fn-header-home').length,1);
+   assert.equal($('.fn-footer-home').length,1);
+   assert.equal($('.fn-home-program .fn-program-promo .fn-actions a').length,1);
    assert.equal($('.fn-home-explore .fn-card').length,3);
    assert.equal($('.fn-home-explore .fn-about').length,1);
    assert.equal($('.fn-home-sponsors .fn-sponsor-grid img').length,9);
    assert.equal($('.fn-countdown [data-unit]').length,4);
- } else assert.equal($('.fn-home').length,0,path);
+ } else { assert.equal($('.fn-home').length,0,path); assert.equal($('.fn-header-home,.fn-footer-home').length,0,path); }
  if(path.endsWith('/kontakt-og-information/')){assert.equal($('a[href="https://kulturn.kk.dk/st%C3%B8beriet"]').length,0);assert.ok($('a[href="https://kulturogfritidn.kk.dk/huse/stoeberiet"]').length);assert.ok($('a[href="https://kulturogfritidn.kk.dk/huse/noerrebrohallen"]').length);assert.ok($('a[href="https://union.kk.dk/om-os"]').length);}
  if(path.endsWith('/bliv-aktoer/'))assert.match($('.festival-registration').attr('action'),/docs.google.com\/forms/);
  $('a[href]').each((_,el)=>{const h=$(el).attr('href');if(h.startsWith('/')&&!h.startsWith('//')&&!h.startsWith('/media/')&&!h.startsWith('/festival-'))internal.add(h.split(/[?#]/)[0]);else if(/^https?:/.test(h))external.add(h);});

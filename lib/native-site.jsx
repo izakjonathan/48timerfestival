@@ -31,7 +31,7 @@ const sponsors = [
   ['Områdefornyelsen ved Skjolds Plads', '2024/05/OMF.png'],
 ];
 function Picture({ src, alt, sizes, eager = false, className, mobile, focus }) {
-  const widths = [384, 640, 828, 1080, 1440];
+  const widths = eager ? [384, 640, 828, 1080, 1440, 1920] : [384, 640, 828, 1080, 1440];
   const candidates = value => widths.map(width => optimized(value, width, eager ? 85 : 75) + ' ' + width + 'w').join(', ');
   return <picture className={className}>
     {mobile && <source media="(max-width: 700px)" srcSet={candidates(mobile)} sizes="100vw"/>}
@@ -52,7 +52,6 @@ function Countdown({ lang, document, sectionId = 'countdown' }) {
 }
 
 function Home({ lang, document }) {
-  const en = lang === 'en';
   const route=routeFor(lang);
   const text=key=>copy(document,route,key);
   const link=key=>copyLink(document,route,key);
@@ -62,43 +61,45 @@ function Home({ lang, document }) {
   const mainPoster = image(document,desktopPoster);
   const phonePoster = document.images?.[imageKey(mobilePoster)] ?? (document.images?.[imageKey(desktopPoster)] || image(document,mobilePoster));
   const ratio=src=>{const size=document.mediaDimensions?.[src];return size?size.width+" / "+size.height:"1054 / 1492";};
+  const exploreBackground=background(document,'/et_pb_section_3','var(--fn-teal)');
   return <>
     <section className="fn-hero fn-home-poster" style={{...background(document,'/et_pb_section_0','var(--fn-coral)'),"--poster-aspect":ratio(mainPoster),"--poster-mobile-aspect":ratio(phonePoster)}}>
+      <div className="fn-sr-only"><p>{text('hero.eyebrow')}</p><h1>{text('hero.title1')} {text('hero.title2')}</h1></div>
       <div className="fn-hero-art"><Picture src={mainPoster} mobile={phonePoster} alt={localized(lang,'Illustreret festivalplakat','Illustrated festival poster')} sizes="100vw" eager/></div>
     </section>
     <div className="fn-ticker" style={background(document,'/et_pb_section_1','var(--fn-teal)')}>
       <span className="fn-sr-only">{dateLabel} · Nørrebro</span>
       <div className="fn-ticker-track" aria-hidden="true">{[0,1].map(copy => <div key={copy}>{[0,1,2,3].map(i => <span key={i}>{dateLabel.toUpperCase()} <b aria-hidden="true">·</b> NØRREBRO</span>)}</div>)}</div>
     </div>
-    <section className="fn-hero fn-home-intro" style={background(document,'/et_pb_section_0','var(--fn-coral)')}>
-      <div className="fn-wrap fn-hero-copy">
-        <div className="fn-home-intro-title">
-          <p className="fn-eyebrow">{text('hero.eyebrow')}</p>
-          <h1>{text('hero.title1')}<br/>{text('hero.title2')}</h1>
-        </div>
-        <div className="fn-home-intro-details">
-          <p className="fn-hero-date">{dateLabel}</p>
-          <p className="fn-lead">{text('hero.intro')}</p>
-          <div className="fn-actions"><Button href={link('hero.program').href}>{link('hero.program').text}</Button><Button secondary href={link('hero.participate').href}>{link('hero.participate').text}</Button></div>
-        </div>
-      </div>
-    </section>
     <section className="fn-section fn-home-program" style={background(document,'/et_pb_section_2','var(--fn-coral)')}>
       <div className="fn-wrap fn-program-promo" data-fn-reveal>
         <h2 className="fn-display">{text('program.heading')}</h2>
         <div><h3>{text(events.length?'program.available':'program.coming')}</h3>
           <p>{text(events.length?'program.availableBody':'program.comingBody')}</p>
-          <div className="fn-actions"><Button href={link('program.button').href}>{link('program.button').text}</Button><SiteLink className="fn-text-link" href={link('program.facebook').href}>{link('program.facebook').text} <Arrow/></SiteLink></div>
+          <div className="fn-actions">
+            {events.length ? <Button href={link('program.button').href}>{link('program.button').text}</Button> : <Button href={link('program.facebook').href}>{link('program.facebook').text}</Button>}
+          </div>
         </div>
       </div>
     </section>
-    <section className="fn-section fn-home-explore" style={{...background(document,'/et_pb_section_3','var(--fn-teal)'), '--fn-tile-caption':background(document,'/et_pb_section_3','var(--fn-teal)').backgroundColor}}>
+    <section className="fn-section fn-home-explore" style={{...exploreBackground, '--fn-tile-caption':exploreBackground.backgroundColor}}>
       <div className="fn-wrap">
-        <div className="fn-section-heading" data-fn-reveal><h2 className="fn-display">{text('explore.heading')}</h2></div>
+        <h2 className="fn-sr-only">{text('explore.heading')}</h2>
         <div className="fn-cards">
           {['card.participate','card.program','card.gallery'].map((key,index) => <SiteLink className="fn-card" data-fn-reveal key={key} href={link(key).href}><Picture src={image(document,photos[index])} focus={document.imageFocus?.[imageKey(photos[index])]} alt="" sizes="(max-width: 700px) 90vw, 32vw"/><div><h3>{link(key).text}</h3><Arrow/></div></SiteLink>)}
         </div>
-        <div className="fn-about" data-fn-reveal><h2>{text('about.heading')}</h2><div><p>{text('about.body')}</p><SiteLink className="fn-text-link" href={link('about.link').href}>{link('about.link').text} <Arrow/></SiteLink></div></div>
+        <div className="fn-about" data-fn-reveal>
+          <h2>{text('about.heading')}</h2>
+          <div>
+            <p>{text('hero.intro')}</p>
+            <p>{text('about.body')}</p>
+            <div className="fn-actions fn-home-about-links">
+              <SiteLink className="fn-text-link" href={link('about.link').href}>{link('about.link').text} <Arrow/></SiteLink>
+              <SiteLink className="fn-text-link" href={link('hero.program').href}>{link('hero.program').text} <Arrow/></SiteLink>
+              <SiteLink className="fn-text-link" href={link('hero.participate').href}>{link('hero.participate').text} <Arrow/></SiteLink>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
     <section className="fn-section fn-sponsors fn-home-sponsors" style={background(document,'/et_pb_section_4','var(--fn-teal)')}>
@@ -166,7 +167,7 @@ export function NativeContent({ route, document, preview=false }) {
   const program = route === '/program/' || route === '/en/program/';
   const event=eventAt(route,document);
   const theme = nativeTheme(document);
-  return <div className="fn-native" lang={lang}>
+  return <div className={home?"fn-native fn-native-home":"fn-native"} lang={lang}>
     <link rel="stylesheet" href={theme.href} precedence="festival-fonts"/>
     <style>{theme.css}</style>
     <Header route={route} document={document}/>

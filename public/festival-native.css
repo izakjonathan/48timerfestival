@@ -323,53 +323,75 @@
 }
 @media(prefers-reduced-motion:reduce){ .fn-reveal-ready [data-fn-reveal].fn-reveal { animation:none!important; } }
 
-/* Home only: artwork-led landing page, with the existing theme and editorial slots. */
-.fn-home > :is(.fn-home-intro,.fn-home-program,.fn-home-explore,.fn-home-sponsors,.fn-countdown) > .fn-wrap {
+/* Home only: reference structure, preserving the existing design tokens and motion. */
+.fn-home > :is(.fn-home-program,.fn-home-explore,.fn-home-sponsors,.fn-countdown) > .fn-wrap,
+.fn-footer-home > .fn-wrap {
   width: min(100%, 1440px);
   padding-inline: clamp(20px, 10vw, 144px);
 }
-.fn-home .fn-home-poster { padding: 0; }
+
+/* The navigation floats over the opening illustration rather than occupying a row. */
+.fn-header-home { position: fixed; inset: 0 0 auto; background: transparent; pointer-events: none; }
+.fn-header-home :is(.fn-menu-toggle,.fn-logo,.fn-languages,.fn-mobile-nav,.fn-skip) { pointer-events: auto; }
+.fn-header-home .fn-header-bar { border-bottom: 0; }
+.fn-header-home .fn-desktop-nav { display: none; }
+.fn-header-home .fn-menu-toggle { display: block; margin-left: -9px; background: var(--fn-yellow); }
+.fn-header-home .fn-logo { margin-left: auto; }
+.fn-header-home .fn-languages {
+  position: fixed;
+  right: var(--fn-gutter);
+  bottom: max(20px, env(safe-area-inset-bottom));
+  margin: 0;
+  background: var(--fn-yellow);
+}
+.fn-header-home:has(.fn-menu-toggle[aria-expanded="true"]) {
+  background: var(--fn-yellow);
+}
+.fn-header-home:has(.fn-menu-toggle[aria-expanded="true"]) .fn-languages {
+  position: static;
+  margin-left: auto;
+}
+.fn-header-home:has(.fn-menu-toggle[aria-expanded="true"]) .fn-logo { margin-left: 0; }
+
+.fn-home .fn-home-poster { position: relative; padding: 0; }
 .fn-home-poster .fn-hero-art { margin: 0; }
-.fn-home-poster .fn-hero-art picture { width: 100%; }
+.fn-home-poster .fn-hero-art picture { display: block; width: 100%; }
 .fn-home-poster .fn-hero-art img {
   width: 100%;
-  height: auto;
-  max-height: calc(100svh - var(--fn-header-height));
-  aspect-ratio: auto var(--poster-aspect, 1054 / 1492);
-  object-fit: contain;
+  height: 95svh;
+  max-height: none;
+  aspect-ratio: auto;
+  object-fit: cover;
+  object-position: 50% 46%;
 }
-.fn-home .fn-home-intro { padding-block: clamp(32px, 5vw, 70px); }
-.fn-home-intro .fn-hero-copy {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  gap: clamp(30px, 6vw, 96px);
-}
-.fn-home-intro-title, .fn-home-intro-details {
-  display: grid;
-  gap: clamp(12px, 2vw, 24px);
-  min-width: 0;
-}
-.fn-home .fn-home-program { padding-block: clamp(36px, 5vw, 76px); }
-.fn-home-program .fn-program-promo { grid-template-columns: 1fr; gap: clamp(30px, 5vw, 66px); }
+
+/* Directly after the date strip: one announcement, with the heading aligned left. */
+.fn-home .fn-home-program { padding-block: clamp(36px, 4vw, 60px); }
+.fn-home-program .fn-program-promo { grid-template-columns: 1fr; gap: clamp(32px, 5.5vw, 76px); }
 .fn-home-program .fn-program-promo > div { text-align: center; }
 .fn-home-program .fn-program-promo p { margin-inline: auto; }
-.fn-home-program .fn-actions { justify-content: center; }
-.fn-home-explore .fn-cards { gap: clamp(16px, 4vw, 56px); }
+.fn-home-program .fn-actions { justify-content: center; margin-top: clamp(24px, 5vw, 68px); }
+
+/* Three image links, with captions centred on each photograph. */
+.fn-home .fn-home-explore { padding-block: clamp(52px, 7.5vw, 104px) clamp(28px, 5vw, 64px); }
+.fn-home-explore .fn-cards { gap: clamp(16px, 4vw, 56px); align-items: start; }
 .fn-home-explore .fn-card {
   display: grid;
   grid-template-areas: "tile";
-  align-items: end;
+  align-items: center;
   min-width: 0;
 }
-.fn-home-explore .fn-card picture { grid-area: tile; aspect-ratio: 1 / 1; }
+.fn-home-explore .fn-card picture { grid-area: tile; aspect-ratio: 5 / 4; }
+.fn-home-explore .fn-card:first-child picture { aspect-ratio: 1 / 1; }
 .fn-home-explore .fn-card > div {
   grid-area: tile;
   position: relative;
   justify-self: center;
-  margin: 0 12px 12px;
+  margin: 12px;
   padding-inline: 16px;
   max-width: calc(100% - 24px);
   min-height: 0;
+  text-align: center;
   background: var(--fn-tile-caption);
 }
 .fn-home-explore .fn-about {
@@ -380,20 +402,50 @@
   border-top: 0;
 }
 .fn-home-explore .fn-about p { max-width: none; }
+.fn-home-explore .fn-about p + p { margin-top: 0; }
+.fn-home-about-links { margin-top: 16px; }
+
+/* Sponsors follow the introduction; a compact logo arrangement replaces the large boxed grid. */
 .fn-home .fn-home-sponsors { padding-top: 0; }
 .fn-home-sponsors .fn-wrap { padding-top: clamp(36px, 5vw, 72px); }
+.fn-home-sponsors .fn-wrap > h2 { border-top: 1px solid var(--fn-ink); padding-top: clamp(32px, 5vw, 68px); }
+.fn-home-sponsors .fn-sponsor-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: none;
+  gap: clamp(12px, 2.5vw, 32px);
+  border: 0;
+  background: transparent;
+}
+.fn-home-sponsors .fn-sponsor-grid > div { min-height: clamp(80px, 9vw, 120px); }
 .fn-home .fn-countdown-grid { max-width: 720px; }
+
+/* Contact and page links sit on opposite sides of the home footer. */
+.fn-footer-home .fn-footer-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: "info links" "date links";
+}
+.fn-footer-home .fn-footer-grid > div:first-child { grid-area: info; }
+.fn-footer-home .fn-footer-grid > nav { grid-area: links; text-align: right; justify-items: end; }
+.fn-footer-home .fn-footer-date { grid-area: date; }
+.fn-footer-home .fn-copyright { text-align: center; }
 @media (max-width: 900px) {
-  .fn-home > :is(.fn-home-intro,.fn-home-program,.fn-home-explore,.fn-home-sponsors,.fn-countdown) > .fn-wrap { padding-inline: var(--fn-gutter); }
+  .fn-home > :is(.fn-home-program,.fn-home-explore,.fn-home-sponsors,.fn-countdown) > .fn-wrap,
+  .fn-footer-home > .fn-wrap { padding-inline: var(--fn-gutter); }
 }
 @media (max-width: 700px) {
   .fn-home-poster .fn-hero-art img {
     max-height: none;
     height: auto;
     aspect-ratio: auto var(--poster-mobile-aspect, 1054 / 1492);
+    object-fit: contain;
   }
-  .fn-home-intro .fn-hero-copy { grid-template-columns: 1fr; gap: 24px; padding-block: 0; }
   .fn-home-explore .fn-cards { gap: 20px; }
-  .fn-home-explore .fn-card picture { aspect-ratio: 4 / 3; }
-  .fn-home .fn-home-sponsors { padding-top: 0; }
+  .fn-home-explore .fn-card picture, .fn-home-explore .fn-card:first-child picture { aspect-ratio: 4 / 3; }
+  .fn-home-sponsors .fn-sponsor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fn-footer-home .fn-footer-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas: "info" "links" "date";
+  }
+  .fn-footer-home .fn-footer-grid > nav { text-align: left; justify-items: start; }
+  .fn-header-home .fn-languages { bottom: max(12px, env(safe-area-inset-bottom)); right: var(--fn-gutter); }
 }

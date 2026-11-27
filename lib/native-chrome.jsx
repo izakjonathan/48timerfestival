@@ -53,7 +53,8 @@ export function Header({route,document}) {
   const open=localized(lang,'Åbn menu','Open menu'), close=localized(lang,'Luk menu','Close menu');
   const label=localized(lang,'Hovedmenu','Main navigation');
   const logoSrc=image(document,logo);
-  return <header className="fn-header" data-fn-header style={{'--fn-menu':document.sectionBackgrounds?.menu??'var(--fn-yellow)'}}>
+  const home=route==='/'||route==='/en/';
+  return <header className={home?"fn-header fn-header-home":"fn-header"} data-fn-header style={{'--fn-menu':document.sectionBackgrounds?.menu??'var(--fn-yellow)'}}>
     <a className="fn-skip" href="#main-content">{localized(lang,'Gå til indhold','Skip to content')}</a>
     <div className="fn-header-bar">
       <button className="fn-menu-toggle" type="button" aria-expanded="false" aria-controls="fn-menu" aria-label={open} data-open-label={open} data-close-label={close}><span/><span/><span/></button>
@@ -69,7 +70,8 @@ export function Header({route,document}) {
 }
 export function Footer({route,document}) {
   const lang=langFor(route);
-  return <footer className="fn-footer" style={background(document,'footer','var(--fn-coral)')}>
+  const home=route==='/'||route==='/en/';
+  return <footer className={home?"fn-footer fn-footer-home":"fn-footer"} style={background(document,'footer','var(--fn-coral)')}>
     <div className="fn-wrap fn-footer-grid">
       <div><h2>{copy(document,'shared.'+lang,'footer.name')}</h2><p>{copy(document,'shared.'+lang,'footer.organization')}<br/>{copy(document,'shared.'+lang,'footer.address')}<br/>{copy(document,'shared.'+lang,'footer.cvr')}</p><SiteLink href={copyLink(document,'shared.'+lang,'footer.email').href}>{copy(document,'shared.'+lang,'footer.email')}</SiteLink><SocialLinks lang={lang} document={document}/></div>
       <nav aria-label={localized(lang,'Links','Page links')}><NavItems lang={lang} route="" document={document}/>{['footer.press','footer.map','footer.partner'].map(key=><SiteLink key={key} href={copyLink(document,'shared.'+lang,key).href}>{copy(document,'shared.'+lang,key)}</SiteLink>)}</nav>
