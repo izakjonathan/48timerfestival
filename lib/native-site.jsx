@@ -63,23 +63,27 @@ function Home({ lang, document }) {
   const phonePoster = document.images?.[imageKey(mobilePoster)] ?? (document.images?.[imageKey(desktopPoster)] || image(document,mobilePoster));
   const ratio=src=>{const size=document.mediaDimensions?.[src];return size?size.width+" / "+size.height:"1054 / 1492";};
   return <>
-    <section className="fn-hero" style={{...background(document,'/et_pb_section_0','var(--fn-coral)'),"--poster-aspect":ratio(mainPoster),"--poster-mobile-aspect":ratio(phonePoster)}}>
-      <div className="fn-wrap fn-hero-grid">
-        <div className="fn-hero-art"><Picture src={mainPoster} mobile={phonePoster} alt={localized(lang,'Illustreret festivalplakat','Illustrated festival poster')} sizes="(max-width: 700px) 100vw, 50vw" eager/></div>
-        <div className="fn-hero-copy">
+    <section className="fn-hero fn-home-poster" style={{...background(document,'/et_pb_section_0','var(--fn-coral)'),"--poster-aspect":ratio(mainPoster),"--poster-mobile-aspect":ratio(phonePoster)}}>
+      <div className="fn-hero-art"><Picture src={mainPoster} mobile={phonePoster} alt={localized(lang,'Illustreret festivalplakat','Illustrated festival poster')} sizes="100vw" eager/></div>
+    </section>
+    <div className="fn-ticker" style={background(document,'/et_pb_section_1','var(--fn-teal)')}>
+      <span className="fn-sr-only">{dateLabel} · Nørrebro</span>
+      <div className="fn-ticker-track" aria-hidden="true">{[0,1].map(copy => <div key={copy}>{[0,1,2,3].map(i => <span key={i}>{dateLabel.toUpperCase()} <b aria-hidden="true">·</b> NØRREBRO</span>)}</div>)}</div>
+    </div>
+    <section className="fn-hero fn-home-intro" style={background(document,'/et_pb_section_0','var(--fn-coral)')}>
+      <div className="fn-wrap fn-hero-copy">
+        <div className="fn-home-intro-title">
           <p className="fn-eyebrow">{text('hero.eyebrow')}</p>
           <h1>{text('hero.title1')}<br/>{text('hero.title2')}</h1>
+        </div>
+        <div className="fn-home-intro-details">
           <p className="fn-hero-date">{dateLabel}</p>
           <p className="fn-lead">{text('hero.intro')}</p>
           <div className="fn-actions"><Button href={link('hero.program').href}>{link('hero.program').text}</Button><Button secondary href={link('hero.participate').href}>{link('hero.participate').text}</Button></div>
         </div>
       </div>
     </section>
-    <div className="fn-ticker" style={background(document,'/et_pb_section_1','var(--fn-teal)')}>
-      <span className="fn-sr-only">{dateLabel} · Nørrebro</span>
-      <div className="fn-ticker-track" aria-hidden="true">{[0,1].map(copy => <div key={copy}>{[0,1,2,3].map(i => <span key={i}>{dateLabel.toUpperCase()} <b aria-hidden="true">·</b> NØRREBRO</span>)}</div>)}</div>
-    </div>
-    <section className="fn-section" style={background(document,'/et_pb_section_2','var(--fn-coral)')}>
+    <section className="fn-section fn-home-program" style={background(document,'/et_pb_section_2','var(--fn-coral)')}>
       <div className="fn-wrap fn-program-promo" data-fn-reveal>
         <h2 className="fn-display">{text('program.heading')}</h2>
         <div><h3>{text(events.length?'program.available':'program.coming')}</h3>
@@ -88,7 +92,7 @@ function Home({ lang, document }) {
         </div>
       </div>
     </section>
-    <section className="fn-section" style={background(document,'/et_pb_section_3','var(--fn-teal)')}>
+    <section className="fn-section fn-home-explore" style={{...background(document,'/et_pb_section_3','var(--fn-teal)'), '--fn-tile-caption':background(document,'/et_pb_section_3','var(--fn-teal)').backgroundColor}}>
       <div className="fn-wrap">
         <div className="fn-section-heading" data-fn-reveal><h2 className="fn-display">{text('explore.heading')}</h2></div>
         <div className="fn-cards">
@@ -97,7 +101,7 @@ function Home({ lang, document }) {
         <div className="fn-about" data-fn-reveal><h2>{text('about.heading')}</h2><div><p>{text('about.body')}</p><SiteLink className="fn-text-link" href={link('about.link').href}>{link('about.link').text} <Arrow/></SiteLink></div></div>
       </div>
     </section>
-    <section className="fn-section fn-sponsors" style={background(document,'/et_pb_section_4','var(--fn-teal)')}>
+    <section className="fn-section fn-sponsors fn-home-sponsors" style={background(document,'/et_pb_section_4','var(--fn-teal)')}>
       <div className="fn-wrap" data-fn-reveal><h2 className="fn-display">{text('sponsors.heading')}</h2><div className="fn-sponsor-grid">{sponsors.map(([name,src]) => <div key={src}><img src={optimized(image(document,assets+src),384)} data-original={image(document,assets+src)} alt={name} loading="lazy" decoding="async"/></div>)}</div></div>
     </section>
     <Countdown lang={lang} document={document}/>
@@ -166,7 +170,7 @@ export function NativeContent({ route, document, preview=false }) {
     <link rel="stylesheet" href={theme.href} precedence="festival-fonts"/>
     <style>{theme.css}</style>
     <Header route={route} document={document}/>
-    <main id="main-content" tabIndex={-1} className="fn-main"><Blocks route={route} document={document} position="top"/>{event?<EventPage event={event} lang={lang} document={document}/>:home ? <Home lang={lang} document={document}/> : program ? <Program lang={lang} document={document}/> : <InnerPage route={route} document={document} Countdown={Countdown}/>}<Blocks route={route} document={document} position="bottom"/></main>
+    <main id="main-content" tabIndex={-1} className={home?"fn-main fn-home":"fn-main"}><Blocks route={route} document={document} position="top"/>{event?<EventPage event={event} lang={lang} document={document}/>:home ? <Home lang={lang} document={document}/> : program ? <Program lang={lang} document={document}/> : <InnerPage route={route} document={document} Countdown={Countdown}/>}<Blocks route={route} document={document} position="bottom"/></main>
     <Footer route={route} document={document}/>
     <PublicInteractions route={route} preview={preview}/>
   </div>;

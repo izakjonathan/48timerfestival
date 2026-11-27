@@ -322,3 +322,78 @@
  .fn-footer-grid { gap:36px; }
 }
 @media(prefers-reduced-motion:reduce){ .fn-reveal-ready [data-fn-reveal].fn-reveal { animation:none!important; } }
+
+/* Home only: artwork-led landing page, with the existing theme and editorial slots. */
+.fn-home > :is(.fn-home-intro,.fn-home-program,.fn-home-explore,.fn-home-sponsors,.fn-countdown) > .fn-wrap {
+  width: min(100%, 1440px);
+  padding-inline: clamp(20px, 10vw, 144px);
+}
+.fn-home .fn-home-poster { padding: 0; }
+.fn-home-poster .fn-hero-art { margin: 0; }
+.fn-home-poster .fn-hero-art picture { width: 100%; }
+.fn-home-poster .fn-hero-art img {
+  width: 100%;
+  height: auto;
+  max-height: calc(100svh - var(--fn-header-height));
+  aspect-ratio: auto var(--poster-aspect, 1054 / 1492);
+  object-fit: contain;
+}
+.fn-home .fn-home-intro { padding-block: clamp(32px, 5vw, 70px); }
+.fn-home-intro .fn-hero-copy {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(30px, 6vw, 96px);
+}
+.fn-home-intro-title, .fn-home-intro-details {
+  display: grid;
+  gap: clamp(12px, 2vw, 24px);
+  min-width: 0;
+}
+.fn-home .fn-home-program { padding-block: clamp(36px, 5vw, 76px); }
+.fn-home-program .fn-program-promo { grid-template-columns: 1fr; gap: clamp(30px, 5vw, 66px); }
+.fn-home-program .fn-program-promo > div { text-align: center; }
+.fn-home-program .fn-program-promo p { margin-inline: auto; }
+.fn-home-program .fn-actions { justify-content: center; }
+.fn-home-explore .fn-cards { gap: clamp(16px, 4vw, 56px); }
+.fn-home-explore .fn-card {
+  display: grid;
+  grid-template-areas: "tile";
+  align-items: end;
+  min-width: 0;
+}
+.fn-home-explore .fn-card picture { grid-area: tile; aspect-ratio: 1 / 1; }
+.fn-home-explore .fn-card > div {
+  grid-area: tile;
+  position: relative;
+  justify-self: center;
+  margin: 0 12px 12px;
+  padding-inline: 16px;
+  max-width: calc(100% - 24px);
+  min-height: 0;
+  background: var(--fn-tile-caption);
+}
+.fn-home-explore .fn-about {
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin-top: clamp(32px, 4vw, 56px);
+  padding-top: 0;
+  border-top: 0;
+}
+.fn-home-explore .fn-about p { max-width: none; }
+.fn-home .fn-home-sponsors { padding-top: 0; }
+.fn-home-sponsors .fn-wrap { padding-top: clamp(36px, 5vw, 72px); }
+.fn-home .fn-countdown-grid { max-width: 720px; }
+@media (max-width: 900px) {
+  .fn-home > :is(.fn-home-intro,.fn-home-program,.fn-home-explore,.fn-home-sponsors,.fn-countdown) > .fn-wrap { padding-inline: var(--fn-gutter); }
+}
+@media (max-width: 700px) {
+  .fn-home-poster .fn-hero-art img {
+    max-height: none;
+    height: auto;
+    aspect-ratio: auto var(--poster-mobile-aspect, 1054 / 1492);
+  }
+  .fn-home-intro .fn-hero-copy { grid-template-columns: 1fr; gap: 24px; padding-block: 0; }
+  .fn-home-explore .fn-cards { gap: 20px; }
+  .fn-home-explore .fn-card picture { aspect-ratio: 4 / 3; }
+  .fn-home .fn-home-sponsors { padding-top: 0; }
+}
