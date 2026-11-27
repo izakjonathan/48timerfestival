@@ -3,7 +3,7 @@ import { imageKey } from './appearance.js';
 import Link from 'next/link';
 import pages from './pages.js';
 import { copy, copyLink } from './content-copy.js';
-import { festivalDates, formatDates } from './festival-dates.js';
+import { festivalDates } from './festival-dates.js';
 import archivedMedia from '../content/archived-media.json';
 
 const assets = '/festival-assets/wp-content/uploads/';
@@ -71,12 +71,24 @@ export function Header({route,document}) {
 export function Footer({route,document}) {
   const lang=langFor(route);
   const home=route==='/'||route==='/en/';
+  const shared='shared.'+lang;
+  const address=copy(document,shared,'footer.address').replace(/\s+·\s+/g,'\n');
+  const footerKeys=['nav.program','nav.about','nav.gallery','nav.volunteer','nav.participate','nav.contact'];
   return <footer className={home?"fn-footer fn-footer-home":"fn-footer"} style={background(document,'footer','var(--fn-coral)')}>
     <div className="fn-wrap fn-footer-grid">
-      <div><h2>{copy(document,'shared.'+lang,'footer.name')}</h2><p>{copy(document,'shared.'+lang,'footer.organization')}<br/>{copy(document,'shared.'+lang,'footer.address')}<br/>{copy(document,'shared.'+lang,'footer.cvr')}</p><SiteLink href={copyLink(document,'shared.'+lang,'footer.email').href}>{copy(document,'shared.'+lang,'footer.email')}</SiteLink><SocialLinks lang={lang} document={document}/></div>
-      <nav aria-label={localized(lang,'Links','Page links')}><NavItems lang={lang} route="" document={document}/>{['footer.press','footer.map','footer.partner'].map(key=><SiteLink key={key} href={copyLink(document,'shared.'+lang,key).href}>{copy(document,'shared.'+lang,key)}</SiteLink>)}</nav>
-      <div className="fn-footer-date"><h2>{formatDates(festivalDates(document),lang,false)}<br/>{festivalDates(document).end.slice(0,4)}</h2><p>{copy(document,'shared.'+lang,'footer.location')}</p></div>
+      <div className="fn-footer-social"><SocialLinks lang={lang} document={document}/></div>
+      <div className="fn-footer-info">
+        <h2>{copy(document,shared,'footer.name')}</h2>
+        <p><strong>{copy(document,shared,'footer.organization')}</strong><br/>
+          <span className="fn-footer-address">{address}</span><br/>
+          {copy(document,shared,'footer.cvr')}<br/>
+          <SiteLink href={copyLink(document,shared,'footer.email').href}>{copy(document,shared,'footer.email')}</SiteLink>
+        </p>
+      </div>
+      <nav className="fn-footer-links" aria-label={localized(lang,'Links','Page links')}>
+        {footerKeys.map(key=>{const link=copyLink(document,shared,key);return <SiteLink key={key} href={link.href} aria-current={route===link.href?'page':undefined}>{link.text}</SiteLink>;})}
+      </nav>
     </div>
-    <div className="fn-copyright" style={background(document,'copyright','var(--fn-teal)')}><div className="fn-wrap">© {copy(document,'shared.'+lang,'footer.name')} {festivalDates(document).start.slice(0,4)}</div></div>
+    <div className="fn-copyright" style={background(document,'copyright','var(--fn-teal)')}><div className="fn-wrap">{festivalDates(document).start.slice(0,4)} © {copy(document,shared,'footer.name')}</div></div>
   </footer>;
 }

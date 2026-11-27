@@ -107,16 +107,39 @@ html:has(.fn-native) { background: var(--fn-coral); }
 .fn-countdown-grid > div { display: flex; flex-direction: column; gap: 6px; }
 .fn-countdown-grid strong { font-family: var(--fn-h1); font-weight: var(--festival-weight-h1,400); line-height: var(--festival-line-height-h1,1.12); letter-spacing: var(--festival-letter-spacing-h1,.005em); font-size: clamp(2.3rem,8vw,7rem); font-variant-numeric: tabular-nums; }
 .fn-countdown-grid span { font-size: clamp(.75rem,1.4vw,1rem); }
-.fn-footer { padding: 56px 0 0; border-top: 1px solid var(--fn-ink); }
-.fn-footer-grid { display: grid; grid-template-columns: 1.3fr .9fr .8fr; gap: 32px; padding-bottom: 48px; }
-.fn-footer p { margin-block: 12px; }
-.fn-footer nav { display: grid; align-content: start; gap: 14px; }
+/* Original site footer: a social row and two opposing columns. */
+.fn-footer { padding: clamp(40px,5vw,76px) 0 0; border-top: 1px solid var(--fn-ink); }
+.fn-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  grid-template-areas: "social social" "info links";
+  align-items: center;
+  gap: clamp(24px,3vw,48px) clamp(24px,5vw,80px);
+  padding-inline: clamp(20px,10vw,144px);
+  padding-bottom: clamp(32px,4vw,56px);
+}
+.fn-footer-social { grid-area: social; }
+.fn-footer-info { grid-area: info; min-width: 0; }
+.fn-footer-info p { margin: 12px 0 0; overflow-wrap: anywhere; }
+.fn-footer-address { white-space: pre-line; }
+.fn-footer .fn-footer-links { grid-area: links; display: grid; align-content: center; justify-items: end; text-align: right; gap: 12px; }
 .fn-footer a:hover { text-decoration: underline; }
 .fn-socials { display: flex; gap: 4px; margin-top: 20px; }
 .fn-socials a { width: 44px; height: 44px; display: grid; place-items: center; }
 .fn-socials svg { width: 20px; height: 20px; }
-.fn-footer-date h2 { font-size: clamp(2rem,3.5vw,3.6rem); }
-.fn-copyright { border-top: 1px solid var(--fn-ink); padding-block: 16px; font-size: 14px; }
+.fn-footer-social .fn-socials { margin: 0; justify-content: flex-start; }
+.fn-copyright { border-top: 1px solid var(--fn-ink); padding-block: 16px; font-size: 14px; text-align: center; }
+@media(max-width:767px) {
+  .fn-footer-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas: "links" "info" "social";
+    text-align: center;
+    padding-inline: var(--fn-gutter);
+    gap: 32px;
+  }
+  .fn-footer .fn-footer-links { justify-items: center; text-align: center; }
+  .fn-footer-social .fn-socials { justify-content: center; }
+}
 .fn-program-banner { padding-block: clamp(54px,8vw,120px); }
 .fn-program-banner h1 { font-size: clamp(4rem,12vw,11rem); margin-block: 10px 16px; }
 .fn-empty-program { max-width: 760px; margin-inline: auto; text-align: center; }
@@ -156,8 +179,6 @@ html:has(.fn-native) { background: var(--fn-coral); }
   .fn-hero h1 { font-size: clamp(3.1rem,13vw,5.1rem); }
   .fn-cards, .fn-event-grid { grid-template-columns: 1fr; }
   .fn-card picture { aspect-ratio: 4/3; }
-  .fn-footer-grid { grid-template-columns: 1fr; }
-  .fn-footer nav { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .fn-countdown-grid { gap: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -249,7 +270,6 @@ html:has(.fn-native) { background: var(--fn-coral); }
 .fn-native .fn-rich a { overflow-wrap:anywhere; }
 .fn-header-bar { padding-inline:max(var(--fn-gutter),env(safe-area-inset-left)); }
 .fn-footer { padding-bottom:env(safe-area-inset-bottom); }
-.fn-footer-grid { align-items:start; }
 .fn-logo img { aspect-ratio:1; }
 .fn-event-venue { overflow-wrap:anywhere; }
 @media(max-width:700px) {
@@ -263,7 +283,6 @@ html:has(.fn-native) { background: var(--fn-coral); }
   .fn-inner-row + .fn-inner-row { margin-top:32px; }
   .fn-inner-column { gap:18px; }
   .fn-program-banner h1 { font-size:clamp(3rem,12vw,5.5rem); white-space:normal; }
-  .fn-footer-grid { gap:32px; }
   .fn-gallery-view { padding:20px 12px; }
 }
 
@@ -316,13 +335,11 @@ html:has(.fn-native) { background: var(--fn-coral); }
  .fn-card > div { min-height:56px; }
  .fn-native .fn-display { font-size:clamp(2rem,10.5vw,3.6rem); }
  .fn-program-banner h1 { overflow-wrap:anywhere; }
- .fn-footer-grid { gap:36px; }
 }
 @media(prefers-reduced-motion:reduce){ .fn-reveal-ready [data-fn-reveal].fn-reveal { animation:none!important; } }
 
 /* Home only: reference structure, preserving the existing design tokens and motion. */
-.fn-home > :is(.fn-home-program,.fn-home-explore,.fn-home-sponsors,.fn-countdown) > .fn-wrap,
-.fn-footer-home > .fn-wrap {
+.fn-home > :is(.fn-home-program,.fn-home-explore,.fn-home-sponsors,.fn-countdown) > .fn-wrap {
   width: min(100%, 1440px);
   padding-inline: clamp(20px, 10vw, 144px);
 }
@@ -430,18 +447,8 @@ html:has(.fn-native) { background: var(--fn-coral); }
 @media(prefers-reduced-motion:reduce){.fn-sponsor-slide { transition: none; }}
 .fn-home .fn-countdown-grid { max-width: 720px; }
 
-/* Contact and page links sit on opposite sides of the home footer. */
-.fn-footer-home .fn-footer-grid {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-areas: "info links" "date links";
-}
-.fn-footer-home .fn-footer-grid > div:first-child { grid-area: info; }
-.fn-footer-home .fn-footer-grid > nav { grid-area: links; text-align: right; justify-items: end; }
-.fn-footer-home .fn-footer-date { grid-area: date; }
-.fn-footer-home .fn-copyright { text-align: center; }
 @media (max-width: 900px) {
-  .fn-home > :is(.fn-home-program,.fn-home-explore,.fn-home-sponsors,.fn-countdown) > .fn-wrap,
-  .fn-footer-home > .fn-wrap { padding-inline: var(--fn-gutter); }
+  .fn-home > :is(.fn-home-program,.fn-home-explore,.fn-home-sponsors,.fn-countdown) > .fn-wrap { padding-inline: var(--fn-gutter); }
 }
 @media (max-width: 700px) {
   .fn-home-poster .fn-hero-art img {
@@ -452,10 +459,5 @@ html:has(.fn-native) { background: var(--fn-coral); }
   }
   .fn-home-explore .fn-cards { gap: 20px; }
   .fn-home-explore .fn-card picture, .fn-home-explore .fn-card:first-child picture { aspect-ratio: 4 / 3; }
-  .fn-footer-home .fn-footer-grid {
-    grid-template-columns: 1fr;
-    grid-template-areas: "info" "links" "date";
-  }
-  .fn-footer-home .fn-footer-grid > nav { text-align: left; justify-items: start; }
   .fn-header-home .fn-languages { bottom: max(12px, env(safe-area-inset-bottom)); right: var(--fn-gutter); }
 }

@@ -35,6 +35,14 @@ for(const path of initial.pages){
  assert.equal($('link[rel=alternate][hreflang=en-GB]').length,1,path);
  assert.ok($('meta[property="og:image"]').attr('content'),path);
  assert.equal($('meta[name=theme-color]').length,1,path);
+ const prefix=path.startsWith('/en/')?'/en/':'/';
+ assert.equal($('.fn-footer-social .fn-socials a').length,3,path);
+ assert.equal($('.fn-footer-info h2').length,1,path);
+ assert.equal($('.fn-footer-info a[href^="mailto:"]').length,1,path);
+ assert.deepEqual($('.fn-footer-links a').map((_,a)=>$(a).attr('href')).get(),['program/','om-festivalen/','galleri/','bliv-frivillig/','bliv-aktoer/','kontakt-og-information/'].map(slug=>prefix+slug),path);
+ assert.equal($('.fn-footer-date').length,0,path);
+ assert.match($('.fn-copyright').text(),/^\s*\d{4} ©/);
+
  if(path===route){assert.match($('title').text(),/TEST SEO/);assert.equal($('meta[name=description]').attr('content'),'TEST META');assert.match($('.fn-custom-block').text(),/TEST BLOCK/);assert.match($('.fn-block-photo img').attr('style'),/10% 70%/);assert.equal($('.fn-block-photo img').attr('alt'),'Test image');}
  if(path==='/')assert.equal($('.fn-custom-block').length,0);
  if(path==='/'||path==='/en/'){
